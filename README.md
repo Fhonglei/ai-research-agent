@@ -7,7 +7,7 @@
 [![Next.js 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-teal.svg)](https://fastapi.tiangolo.com/)
 
-**🌐 Live Demo**: [ai-research-agent.vercel.app](https://ai-research-agent.vercel.app) *(deploy your own in 5 min — see [Deployment Guide](docs/DEPLOYMENT.md))*
+**🌐 Live Demo**: [fhonglei.github.io/ai-research-agent](https://fhonglei.github.io/ai-research-agent/) *(deploy your own in 5 min — see [Deployment Guide](docs/DEPLOYMENT.md))*
 
 ## 📖 Overview
 
