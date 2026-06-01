@@ -36,10 +36,10 @@ class Orchestrator:
         Initialize the orchestrator and all sub-agents/tools.
 
         Args:
-            api_key: Anthropic API key. Falls back to config.
-            model: Claude model. Falls back to config.MODEL.
+            api_key: DeepSeek API key. Falls back to config.
+            model: Model to use. Falls back to config.MODEL.
         """
-        self.api_key = api_key or config.ANTHROPIC_API_KEY
+        self.api_key = api_key or config.DEEPSEEK_API_KEY
         self.model = model or config.MODEL
         self.decomposer = TaskDecomposer(api_key=self.api_key, model=self.model)
         self.researcher = Researcher(api_key=self.api_key, model=self.model)

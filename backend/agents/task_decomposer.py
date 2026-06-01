@@ -1,15 +1,15 @@
 import json
 from typing import Optional
-from anthropic import Anthropic
+from openai import OpenAI
 from config import config
 from utils.logger import logger
 
 
 class TaskDecomposer:
     """
-    Breaks a broad research topic into manageable subtopics using Claude.
+    Breaks a broad research topic into manageable subtopics using DeepSeek.
 
-    The decomposition is guided by structured prompts that instruct Claude to
+    The decomposition is guided by structured prompts that instruct the LLM to
     think like a senior research analyst, identifying distinct angles, domain
     areas, and key questions that together provide comprehensive coverage.
     """
@@ -19,10 +19,13 @@ class TaskDecomposer:
         Initialize the task decomposer.
 
         Args:
-            api_key: Anthropic API key. Falls back to config.
-            model: Claude model to use. Falls back to config.MODEL.
+            api_key: DeepSeek API key. Falls back to config.
+            model: Model to use. Falls back to config.MODEL.
         """
-        self.client = Anthropic(api_key=api_key or config.ANTHROPIC_API_KEY)
+        self.client = OpenAI(
+            api_key=api_key or config.DEEPSEEK_API_KEY,
+            base_url=config.DEEPSEEK_BASE_URL,
+        )
         self.model = model or config.MODEL
         logger.info(f"TaskDecomposer initialized with model={self.model}")
 
@@ -54,24 +57,29 @@ class TaskDecomposer:
 
         try:
             logger.info(f"Decomposing topic (depth={depth}): '{topic[:100]}...'")
-            response = self.client.messages.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=2048,
                 temperature=0.7,
-                system=(
-                    "You are a senior research analyst with expertise across multiple domains. "
-                    "Your task is to break a broad research topic into distinct, non-overlapping "
-                    "subtopics that together provide comprehensive coverage. Each subtopic should "
-                    "represent a meaningful angle of investigation — think about historical context, "
-                    "current state, future trends, key players, technological aspects, economic "
-                    "factors, social impact, regulatory environment, and competing perspectives. "
-                    "Subtopic titles should be clear, concise, and self-contained (understandable "
-                    "without the parent topic)."
-                ),
-                messages=[{"role": "user", "content": prompt}],
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a senior research analyst with expertise across multiple domains. "
+                            "Your task is to break a broad research topic into distinct, non-overlapping "
+                            "subtopics that together provide comprehensive coverage. Each subtopic should "
+                            "represent a meaningful angle of investigation — think about historical context, "
+                            "current state, future trends, key players, technological aspects, economic "
+                            "factors, social impact, regulatory environment, and competing perspectives. "
+                            "Subtopic titles should be clear, concise, and self-contained (understandable "
+                            "without the parent topic)."
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
             )
 
-            raw_output = response.content[0].text
+            raw_output = response.choices[0].message.content
             subtopics = self._parse_subtopics(raw_output)
 
             # Enforce count bounds
@@ -91,7 +99,7 @@ class TaskDecomposer:
             return self._fallback_decompose(topic, min_sub)
 
     def _build_prompt(self, topic: str, min_sub: int, max_sub: int, depth: str) -> str:
-        """Build the structured prompt for Claude."""
+        """Build the structured prompt for the LLM."""
         return f"""Research Topic: {topic}
 Research Depth: {depth.upper()}
 
@@ -112,7 +120,7 @@ no additional text. Example format:
 
     def _parse_subtopics(self, raw_output: str) -> list[str]:
         """
-        Parse Claude's response into a list of subtopic strings.
+        Parse the LLM's response into a list of subtopic strings.
 
         Handles JSON array format and fallback line-by-line parsing.
         """

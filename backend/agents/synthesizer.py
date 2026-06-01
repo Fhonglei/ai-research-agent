@@ -1,5 +1,5 @@
 from typing import Optional
-from anthropic import Anthropic
+from openai import OpenAI
 from config import config
 from models.schemas import ResearchTask
 from utils.logger import logger
@@ -8,7 +8,7 @@ from utils.logger import logger
 class Synthesizer:
     """
     Synthesizes individual research task summaries into a cohesive,
-    well-structured markdown report using Claude.
+    well-structured markdown report using an LLM.
     """
 
     def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
@@ -16,10 +16,13 @@ class Synthesizer:
         Initialize the synthesizer.
 
         Args:
-            api_key: Anthropic API key. Falls back to config.
-            model: Claude model to use. Falls back to config.MODEL.
+            api_key: DeepSeek API key. Falls back to config.
+            model: Model to use. Falls back to config.MODEL.
         """
-        self.client = Anthropic(api_key=api_key or config.ANTHROPIC_API_KEY)
+        self.client = OpenAI(
+            api_key=api_key or config.DEEPSEEK_API_KEY,
+            base_url=config.DEEPSEEK_BASE_URL,
+        )
         self.model = model or config.MODEL
         logger.info(f"Synthesizer initialized with model={self.model}")
 
@@ -60,27 +63,32 @@ class Synthesizer:
             logger.info(f"Synthesizing report for topic: '{topic[:100]}...' "
                         f"from {len(valid_tasks)} tasks")
 
-            # Build task context for Claude
+            # Build task context for LLM
             task_context = self._build_task_context(valid_tasks)
 
             prompt = self._build_synthesis_prompt(topic, task_context, failed_tasks)
 
-            response = self.client.messages.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=8192,
                 temperature=0.6,
-                system=(
-                    "You are a senior research director at a top-tier research firm. "
-                    "Your job is to synthesize individual research summaries into "
-                    "a polished, professional research report in markdown format. "
-                    "The report should be comprehensive yet readable, with clear "
-                    "structure and actionable insights. Write in a confident, "
-                    "authoritative voice while remaining objective and data-driven."
-                ),
-                messages=[{"role": "user", "content": prompt}],
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a senior research director at a top-tier research firm. "
+                            "Your job is to synthesize individual research summaries into "
+                            "a polished, professional research report in markdown format. "
+                            "The report should be comprehensive yet readable, with clear "
+                            "structure and actionable insights. Write in a confident, "
+                            "authoritative voice while remaining objective and data-driven."
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
             )
 
-            markdown_report = response.content[0].text.strip()
+            markdown_report = response.choices[0].message.content.strip()
 
             # Ensure the report starts with a proper H1 title
             if not markdown_report.startswith("# "):
@@ -117,7 +125,7 @@ class Synthesizer:
         task_context: str,
         failed_tasks: list[ResearchTask],
     ) -> str:
-        """Build the full synthesis prompt for Claude."""
+        """Build the full synthesis prompt for the LLM."""
         failed_note = ""
         if failed_tasks:
             failed_subtopics = [t.subtopic for t in failed_tasks]
@@ -187,7 +195,7 @@ Formatting rules:
         tasks: list[ResearchTask],
         failed_tasks: list[ResearchTask],
     ) -> str:
-        """Manually assemble a report when Claude synthesis fails."""
+        """Manually assemble a report when LLM synthesis fails."""
         lines = [f"# Research Report: {topic}", ""]
 
         # Executive Summary — combine first paragraph of each task

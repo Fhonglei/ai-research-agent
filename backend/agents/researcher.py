@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional
-from anthropic import Anthropic
+from openai import OpenAI
 from config import config
 from models.schemas import ResearchTask, Source
 from tools.web_search import SearchTool
@@ -11,7 +11,7 @@ from utils.logger import logger
 class Researcher:
     """
     Researches a single subtopic by searching the web, fetching top results,
-    and synthesizing findings into a concise summary using Claude.
+    and synthesizing findings into a concise summary using an LLM.
     """
 
     def __init__(
@@ -25,12 +25,15 @@ class Researcher:
         Initialize the researcher.
 
         Args:
-            api_key: Anthropic API key. Falls back to config.
-            model: Claude model to use. Falls back to config.MODEL.
+            api_key: DeepSeek API key. Falls back to config.
+            model: Model to use. Falls back to config.MODEL.
             search_tool: Pre-configured SearchTool instance (created if not provided).
             content_fetcher: Pre-configured ContentFetcher instance (created if not provided).
         """
-        self.client = Anthropic(api_key=api_key or config.ANTHROPIC_API_KEY)
+        self.client = OpenAI(
+            api_key=api_key or config.DEEPSEEK_API_KEY,
+            base_url=config.DEEPSEEK_BASE_URL,
+        )
         self.model = model or config.MODEL
         self.search_tool = search_tool or SearchTool()
         self.content_fetcher = content_fetcher or ContentFetcher()
@@ -38,7 +41,7 @@ class Researcher:
 
     def research(self, subtopic: str) -> ResearchTask:
         """
-        Research a subtopic: search, fetch content, and summarize with Claude.
+        Research a subtopic: search, fetch content, and summarize with LLM.
 
         Args:
             subtopic: The subtopic string to research.
@@ -101,7 +104,7 @@ class Researcher:
             if not valid_sources:
                 valid_sources = sources  # Use what we have
 
-            # Step 3: Compile context for Claude
+            # Step 3: Compile context for LLM
             context_parts = []
             for i, src in enumerate(valid_sources, start=1):
                 context_parts.append(f"SOURCE {i}: {src.title}")
@@ -111,8 +114,8 @@ class Researcher:
 
             context = "\n".join(context_parts)
 
-            # Step 4: Ask Claude to summarize
-            summary = self._summarize_with_claude(subtopic, context)
+            # Step 4: Ask LLM to summarize
+            summary = self._summarize_with_llm(subtopic, context)
 
             task.summary = summary
             task.sources = sources
@@ -127,9 +130,9 @@ class Researcher:
             task.summary = f"Research failed: {str(e)}"
             return task
 
-    def _summarize_with_claude(self, subtopic: str, context: str) -> str:
+    def _summarize_with_llm(self, subtopic: str, context: str) -> str:
         """
-        Use Claude to synthesize search results into a research summary.
+        Use the LLM to synthesize search results into a research summary.
 
         Args:
             subtopic: The subtopic being researched.
@@ -140,7 +143,7 @@ class Researcher:
         """
         prompt = f"""You are a research analyst summarizing findings for the following subtopic:
 
-SUBTopic: {subtopic}
+SUBTOPIC: {subtopic}
 
 Below are search results and fetched web content related to this subtopic.
 Synthesize this information into a concise, professional research summary.
@@ -158,22 +161,27 @@ SOURCE MATERIAL:
 {context[:8000]}"""
 
         try:
-            response = self.client.messages.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=2048,
                 temperature=0.5,
-                system=(
-                    "You are an expert research analyst. You synthesize information "
-                    "from multiple web sources into clear, factual research summaries. "
-                    "Your writing is professional, objective, and concise. Always cite "
-                    "sources when presenting specific claims."
-                ),
-                messages=[{"role": "user", "content": prompt}],
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an expert research analyst. You synthesize information "
+                            "from multiple web sources into clear, factual research summaries. "
+                            "Your writing is professional, objective, and concise. Always cite "
+                            "sources when presenting specific claims."
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
             )
-            return response.content[0].text.strip()
+            return response.choices[0].message.content.strip()
 
         except Exception as e:
-            logger.error(f"Claude summarization failed: {e}")
+            logger.error(f"LLM summarization failed: {e}")
             # Fallback: return a simple extraction-based summary
             sentences = [s.strip() for s in context.split(".") if len(s.strip()) > 30]
             summary = "Summary of findings for " + subtopic + ":\n\n"

@@ -87,7 +87,7 @@ Output:
 └─────────────────────────────────────────────────────┘
          │              │                 │
     ┌────▼────┐   ┌────▼────┐    ┌───────▼──────┐
-    │ Claude   │   │ Tavily   │    │  Supabase    │
+    │ DeepSeek │   │ Tavily   │    │  Supabase    │
     │ (LLM)    │   │ (Search) │    │  (Storage)   │
     └─────────┘   └─────────┘    └──────────────┘
 ```
@@ -100,7 +100,7 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for a detailed design document with 
 |----------|-----------|---------|
 | **Frontend** | Next.js 14, Tailwind CSS, shadcn/ui | React UI with SSR |
 | **Backend** | FastAPI, Python 3.12 | Async REST API |
-| **AI/LLM** | Claude API (Anthropic SDK) | Agent reasoning & summarization |
+| **AI/LLM** | DeepSeek V4-Pro (via OpenAI SDK) | Agent reasoning & summarization |
 | **Search** | Tavily Search API | Real-time web search |
 | **Database** | Supabase (PostgreSQL) | Report persistence & history |
 | **Report Gen** | WeasyPrint, python-pptx | PDF & PowerPoint export |
@@ -303,5 +303,5 @@ MIT © 2026 — See [LICENSE](LICENSE) for details.
 ---
 
 <p align="center">
-  <b>Built with ❤️ using Claude, FastAPI, Next.js, and Tavily</b>
+  <b>Built with ❤️ using DeepSeek, FastAPI, Next.js, and Tavily</b>
 </p>

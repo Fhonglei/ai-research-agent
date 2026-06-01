@@ -5,8 +5,9 @@ from typing import Optional
 class Config(BaseSettings):
     """Application configuration loaded from environment variables."""
 
-    # Anthropic API
-    ANTHROPIC_API_KEY: str
+    # DeepSeek API (OpenAI-compatible)
+    DEEPSEEK_API_KEY: str
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
 
     # Tavily Search API
     TAVILY_API_KEY: str
@@ -19,8 +20,8 @@ class Config(BaseSettings):
     BACKEND_PORT: int = 8000
     BACKEND_HOST: str = "0.0.0.0"
 
-    # Default Claude model
-    MODEL: str = "claude-sonnet-4-6"
+    # Default model
+    MODEL: str = "deepseek-chat"
 
     # Report storage directory
     REPORTS_DIR: str = "reports"
