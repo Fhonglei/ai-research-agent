@@ -7,6 +7,8 @@
 [![Next.js 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-teal.svg)](https://fastapi.tiangolo.com/)
 
+**🌐 Live Demo**: [ai-research-agent.vercel.app](https://ai-research-agent.vercel.app) *(deploy your own in 5 min — see [Deployment Guide](docs/DEPLOYMENT.md))*
+
 ## 📖 Overview
 
 The **AI Research Agent** automates the research workflow end-to-end. You provide a topic, and the system:
@@ -34,6 +36,26 @@ Output:
   └── References (with clickable links)
 ```
 
+## 📸 Screenshots
+
+### Research Form
+![Research Form](docs/screenshots/research-form.png)
+*Enter any research topic and select depth (Quick / Standard / Deep)*
+
+### Real-time Progress
+![Research Progress](docs/screenshots/research-progress.png)
+*Watch each step: decomposition → searching → summarizing → file generation*
+
+### Generated Report
+![Report](docs/screenshots/report.png)
+*Professional Markdown report with citations, rendered beautifully*
+
+### Download Options
+![Download](docs/screenshots/download.png)
+*Export to PDF or PowerPoint with one click*
+
+> **Note**: If screenshots are not yet uploaded, run the app locally (`npm run dev` + `uvicorn main:app`) to capture your own.
+
 ## ✨ Core Features
 
 - 🤖 **Multi-Agent Pipeline** — Task decomposition, parallel research, synthesis
@@ -56,7 +78,7 @@ Output:
 │              FastAPI Backend (Railway)                │
 │                                                       │
 │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │ Orchestrator│  │Researcher│  │ Report Generator │  │
+│  │Orchestrator│  │Researcher│  │ Report Generator │  │
 │  └─────┬────┘  └────┬─────┘  └────────┬─────────┘  │
 │        │             │                  │             │
 │  ┌─────▼────┐  ┌────▼─────┐  ┌────────▼─────────┐  │
@@ -69,6 +91,8 @@ Output:
     │ (LLM)    │   │ (Search) │    │  (Storage)   │
     └─────────┘   └─────────┘    └──────────────┘
 ```
+
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for a detailed design document with data flow diagrams and design decisions.
 
 ## 🛠️ Tech Stack
 
@@ -89,12 +113,12 @@ Output:
 
 - Python 3.12+
 - Node.js 20+
-- API keys for [Anthropic](https://console.anthropic.com/), [Tavily](https://app.tavily.com/), and [Supabase](https://app.supabase.com/)
+- API keys for [Anthropic](https://console.anthropic.com/), [Tavily](https://app.tavily.com/), and optionally [Supabase](https://app.supabase.com/)
 
 ### 1. Clone & Configure
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ai-research-agent.git
+git clone https://github.com/Fhonglei/ai-research-agent.git
 cd ai-research-agent
 
 cp .env.example .env
@@ -131,7 +155,7 @@ docker-compose up
 # Frontend: http://localhost:3000
 ```
 
-## 📡 API Reference
+## 📡 API Design
 
 ### `POST /api/research`
 
@@ -142,33 +166,38 @@ Start a new research task. Returns SSE stream.
 { "topic": "AI internship market 2026", "depth": "standard" }
 
 // SSE Events
-event: progress
-data: {"type": "decomposing", "message": "Analyzing research topic..."}
+event: decomposing
+data: {"message": "Analyzing research topic..."}
 
-event: progress
-data: {"type": "researching", "task": "Industry Trends", "progress": 2}
+event: decomposed
+data: {"subtopics": ["Industry Trends", "Top Companies", ...]}
+
+event: researching
+data: {"message": "Researching: Industry Trends (1/5)"}
+
+event: task_complete
+data: {"subtopic": "Industry Trends", "status": "complete"}
 
 event: complete
-data: {"type": "complete", "report_id": "abc-123", "report": {...}}
+data: {"report_id": "abc-123", "markdown_content": "# Report...", ...}
 ```
 
-### `GET /api/report/{report_id}`
+### Other Endpoints
 
-Retrieve a completed research report.
-
-### `GET /api/report/{report_id}/download?format=pdf`
-
-Download report as PDF or PPTX (`format=pdf|pptx`).
-
-### `GET /api/history`
-
-List all past research reports.
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/report/{id}` | Retrieve a completed report |
+| `GET` | `/api/report/{id}/download?format=pdf\|pptx` | Download as PDF or PPTX |
+| `GET` | `/api/history` | List all past reports |
+| `GET` | `/api/health` | Health check |
 
 | Depth | Subtopic Count | Description |
 |-------|---------------|-------------|
 | `quick` | 2-3 | Brief overview for quick answers |
 | `standard` | 4-5 | Balanced depth (default) |
 | `deep` | 6-8 | Exhaustive research with more sources |
+
+See [API.md](docs/API.md) for full API reference with request/response examples.
 
 ## 🗂️ Project Structure
 
@@ -192,7 +221,8 @@ ai-research-agent/
 ├── docs/                 # Extended documentation
 │   ├── ARCHITECTURE.md
 │   ├── API.md
-│   └── DEPLOYMENT.md
+│   ├── DEPLOYMENT.md
+│   └── blog-post.md
 ├── supabase/
 │   └── schema.sql        # Database schema
 ├── docker-compose.yml
@@ -207,15 +237,47 @@ ai-research-agent/
 - **Content Creators** — Fact-checked article drafts, newsletter research
 - **Developers** — Technology evaluation, framework comparison, best practices research
 
-## 🐛 Troubleshooting
+## 🐛 Problems Encountered & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| `ANTHROPIC_API_KEY not set` | Add your key to `.env` |
-| `TAVILY_API_KEY not set` | Get a free key at [tavily.com](https://tavily.com) |
-| PDF generation fails | Ensure system dependencies installed (see Dockerfile) |
-| Search returns no results | Check Tavily API quota |
-| Frontend can't reach backend | Verify `NEXT_PUBLIC_API_URL` in `.env` |
+### 1. Web Content Extraction Quality
+
+**Problem**: Many web pages have messy HTML — navigation bars, ads, cookie banners, and comment sections get mixed with the actual content. Initial attempts with naive `body.get_text()` produced unusable noise that degraded Claude's summary quality.
+
+**Solution**: Built a multi-step content extraction pipeline in `content_fetcher.py`:
+- Target semantic HTML5 elements (`<article>`, `<main>`) first
+- Strip non-content tags (`<script>`, `<style>`, `<nav>`, `<footer>`)
+- Filter hidden elements via `aria-hidden` and `display:none` detection
+- Truncate to 5000 characters to avoid token waste
+- Always set a 10-second timeout to prevent pipeline stalls
+
+### 2. SSE Event Type Mismatch Between Frontend and Backend
+
+**Problem**: The backend sends SSE events with types like `decomposing`, `decomposed`, `researching`, but the frontend was looking for `decomposition`, `task_start`, `task_progress`. Events were silently dropped, and the UI showed no progress.
+
+**Solution**: Designed a unified SSE event protocol. The backend event types became the single source of truth. The frontend API client (`api.ts`) was updated to parse both the `event:` line (for type) and `data:` line (for payload) from the raw SSE stream, then the page component dispatches to the correct state update handler.
+
+### 3. PDF Generation on Different OS
+
+**Problem**: WeasyPrint requires system libraries (Pango, Cairo, GDK-Pixbuf) that differ between macOS, Linux, and Windows. Running `pip install weasyprint` alone fails on clean systems. On Windows, the situation is even more complex.
+
+**Solution**: The `Dockerfile` explicitly installs all required system dependencies (`libpango`, `libpangocairo`, `libgdk-pixbuf`, `libffi`, `libcairo`). For local development without Docker, the README recommends using the Docker Compose setup. WeasyPrint errors are caught gracefully — the report is always available as Markdown even if PDF generation fails.
+
+### 4. Token Cost Management
+
+**Problem**: Each research task involves multiple Claude API calls (decomposition + N× summarization + synthesis). Without careful prompt design, token usage could spiral — especially when feeding full web page content to Claude.
+
+**Solution**:
+- Content is truncated to 5000 chars before being sent to Claude
+- Search results are capped at 5 per subtopic, only top 3 are deep-fetched
+- Depth levels (`quick`/`standard`/`deep`) control subtopic count
+- Claude's `max_tokens` is set to 4096 for summaries, preventing runaway generation
+- Average cost per standard research: ~$0.03-0.08
+
+### 5. Parallel Research Tasks Error Isolation
+
+**Problem**: When 5 research tasks run in parallel via `asyncio.gather()`, one failing task could crash the entire pipeline. Early versions had no error isolation — a single 403 from a website would discard all other valid results.
+
+**Solution**: Used `asyncio.gather(..., return_exceptions=True)` so exceptions are captured rather than raised. Each task failure is logged individually and surfaced as a `task_complete` event with `status: "failed"`. The synthesizer gracefully handles partial results — even if only 2 of 5 tasks succeed, it produces a useful report from available data.
 
 ## 🔮 Future Roadmap
 
@@ -226,6 +288,13 @@ ai-research-agent/
 - [ ] Scheduled recurring research
 - [ ] Voice input support
 - [ ] Browser extension for research-on-the-go
+- [ ] RAG-based knowledge base with vector search (Pinecone/Chroma)
+
+## 📚 Related Blog Posts
+
+- [我是如何做一个 AI Research Agent 的](docs/blog-post.md)
+- [我是如何做一个 RAG 知识库系统的](docs/blog-rag.md)
+- [我是如何用 AI 自动化内容生产流程的](docs/blog-automation.md)
 
 ## 📄 License
 
