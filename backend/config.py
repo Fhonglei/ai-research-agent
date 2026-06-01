@@ -9,8 +9,8 @@ class Config(BaseSettings):
     DEEPSEEK_API_KEY: str
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
 
-    # Tavily Search API
-    TAVILY_API_KEY: str
+    # Tavily Search API (optional — DuckDuckGo used as fallback)
+    TAVILY_API_KEY: Optional[str] = None
 
     # Supabase
     SUPABASE_URL: Optional[str] = None
@@ -29,6 +29,7 @@ class Config(BaseSettings):
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
+        "extra": "ignore",
     }
 
 

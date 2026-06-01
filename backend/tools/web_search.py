@@ -1,12 +1,11 @@
 from typing import Optional
-from tavily import TavilyClient
-from config import config
+from ddgs import DDGS
 from utils.logger import logger
 
 
 class SearchTool:
     """
-    Web search tool backed by the Tavily Search API.
+    Web search tool backed by DuckDuckGo (free, no API key required).
 
     Provides a clean interface for executing web searches and returning
     structured results with url, title, content, and relevance score.
@@ -14,14 +13,14 @@ class SearchTool:
 
     def __init__(self, api_key: Optional[str] = None):
         """
-        Initialize the search tool with a Tavily API key.
+        Initialize the search tool.
 
         Args:
-            api_key: Tavily API key. Falls back to TAVILY_API_KEY from config.
+            api_key: Ignored (kept for interface compatibility). DuckDuckGo
+                     does not require an API key.
         """
-        self.api_key = api_key or config.TAVILY_API_KEY
-        self.client = TavilyClient(api_key=self.api_key)
-        logger.info("SearchTool initialized")
+        self.ddgs = DDGS()
+        logger.info("SearchTool initialized (DuckDuckGo)")
 
     def search(self, query: str, max_results: int = 5) -> list[dict]:
         """
@@ -41,20 +40,18 @@ class SearchTool:
 
         try:
             logger.info(f"Searching web for: '{query[:100]}...'")
-            response = self.client.search(
-                query=query.strip(),
+            raw_results = list(self.ddgs.text(
+                query.strip(),
                 max_results=max_results,
-                search_depth="advanced",
-                include_raw_content=False,
-            )
+            ))
 
             results = []
-            for item in response.get("results", []):
+            for i, item in enumerate(raw_results):
                 results.append({
-                    "url": item.get("url", ""),
+                    "url": item.get("href", ""),
                     "title": item.get("title", ""),
-                    "content": item.get("content", ""),
-                    "score": item.get("score", 0.0),
+                    "content": item.get("body", ""),
+                    "score": 1.0 - (i * 0.1),  # Simple relevance scoring by position
                 })
 
             logger.info(f"Search returned {len(results)} results for query")
@@ -66,29 +63,14 @@ class SearchTool:
 
     def search_raw(self, query: str, max_results: int = 5) -> dict:
         """
-        Execute a web search and return the raw API response dict.
+        Execute a web search and return the raw response dict.
 
         Args:
             query: The search query string.
             max_results: Maximum number of results to return.
 
         Returns:
-            Raw response dict from Tavily, or an empty dict on failure.
+            Raw response dict, or an empty dict on failure.
         """
-        if not query or not query.strip():
-            logger.warning("search_raw called with empty query")
-            return {}
-
-        try:
-            logger.info(f"Raw search for: '{query[:100]}...'")
-            response = self.client.search(
-                query=query.strip(),
-                max_results=max_results,
-                search_depth="advanced",
-                include_raw_content=False,
-            )
-            return response
-
-        except Exception as e:
-            logger.error(f"Raw search failed for query '{query[:80]}...': {e}")
-            return {}
+        results = self.search(query, max_results)
+        return {"results": results} if results else {}
