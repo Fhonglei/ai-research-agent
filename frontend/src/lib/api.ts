@@ -1,6 +1,10 @@
 import { ResearchReport, SSEEvent, ResearchDepth } from '@/types'
 
 export function getApiUrl(): string {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('api_url')
+    if (stored) return stored
+  }
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 }
 
