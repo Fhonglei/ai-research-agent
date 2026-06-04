@@ -8,8 +8,8 @@ import { HistoryList } from "@/components/HistoryList"
 
 export default function HistoryPage() {
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
-      {/* Back button */}
+    <div className="min-h-[calc(100vh-121px)] bg-muted/25">
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
       <Link href="/">
         <Button variant="ghost" size="sm" className="gap-2">
           <ArrowLeft className="h-4 w-4" />
@@ -17,8 +17,8 @@ export default function HistoryPage() {
         </Button>
       </Link>
 
-      {/* History List */}
       <HistoryList />
+      </div>
     </div>
   )
 }

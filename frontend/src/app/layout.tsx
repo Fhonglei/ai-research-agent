@@ -1,14 +1,11 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import { Navbar } from "@/components/Navbar"
 import "./globals.css"
-
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "AI Research Agent",
   description:
-    "AI-powered research automation — generate comprehensive research reports on any topic.",
+    "AI-powered research automation that generates comprehensive reports on any topic.",
 }
 
 export default function RootLayout({
@@ -18,13 +15,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body>
         <div className="flex min-h-screen flex-col">
           <Navbar />
           <main className="flex-1">{children}</main>
-          <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-            <div className="mx-auto max-w-6xl px-4">
-              AI Research Agent &mdash; Powered by AI. Use responsibly.
+          <footer className="border-t bg-background py-5 text-center text-xs text-muted-foreground">
+            <div className="mx-auto max-w-7xl px-4">
+              AI Research Agent - powered by AI. Use responsibly.
             </div>
           </footer>
         </div>

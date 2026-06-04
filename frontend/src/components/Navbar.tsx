@@ -27,11 +27,13 @@ export function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/85 shadow-sm backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-90">
-          <Sparkles className="h-6 w-6 text-blue-400" />
-          <span className="text-xl font-bold tracking-tight">AI Research Agent</span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <span className="text-lg font-semibold tracking-tight">AI Research Agent</span>
         </Link>
 
         <div className="flex items-center gap-2">
@@ -39,7 +41,7 @@ export function Navbar() {
             variant="ghost"
             size="sm"
             onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center gap-2 text-slate-200 hover:bg-slate-700 hover:text-white"
+            className="flex items-center gap-2"
           >
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">API</span>
@@ -49,7 +51,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="sm"
-              className="flex items-center gap-2 text-slate-200 hover:bg-slate-700 hover:text-white"
+              className="flex items-center gap-2"
             >
               <History className="h-4 w-4" />
               <span className="hidden sm:inline">History</span>
@@ -59,19 +61,19 @@ export function Navbar() {
       </div>
 
       {showSettings && (
-        <div className="border-t border-slate-700 bg-slate-800/50 px-4 py-3">
-          <div className="mx-auto flex max-w-6xl items-center gap-2">
-            <span className="shrink-0 text-sm text-slate-300">Backend URL:</span>
+        <div className="border-t bg-muted/50 px-4 py-3">
+          <div className="mx-auto flex max-w-7xl items-center gap-2">
+            <span className="shrink-0 text-sm text-muted-foreground">Backend URL:</span>
             <Input
               value={apiUrl}
               onChange={(e) => setApiUrl(e.target.value)}
               placeholder="http://localhost:8000"
-              className="h-8 bg-slate-700 text-white border-slate-600 text-sm"
+              className="h-8 text-sm"
             />
             <Button
               size="sm"
               onClick={handleSave}
-              className="h-8 gap-1 bg-green-600 hover:bg-green-700"
+              className="h-8 gap-1"
             >
               {saved ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
               {saved ? "Saved!" : "Save"}

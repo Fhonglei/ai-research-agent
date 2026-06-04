@@ -104,12 +104,12 @@ export function HistoryList() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-foreground">Research History</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Research History</h2>
           <Skeleton className="h-10 w-32" />
         </div>
         <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
+            <Card key={i} className="shadow-sm">
               <CardContent className="p-6">
                 <div className="space-y-3">
                   <Skeleton className="h-6 w-3/4" />
@@ -132,7 +132,7 @@ export function HistoryList() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-foreground">Research History</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Research History</h2>
           <Link href="/">
             <Button variant="outline" size="sm" className="gap-2">
               <Plus className="h-4 w-4" />
@@ -140,7 +140,7 @@ export function HistoryList() {
             </Button>
           </Link>
         </div>
-        <Card className="border-destructive">
+        <Card className="border-destructive shadow-sm">
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
             <AlertCircle className="h-10 w-10 text-destructive" />
             <p className="text-sm text-muted-foreground">{error}</p>
@@ -162,7 +162,7 @@ export function HistoryList() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-foreground">Research History</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Research History</h2>
           <Link href="/">
             <Button variant="outline" size="sm" className="gap-2">
               <Plus className="h-4 w-4" />
@@ -170,18 +170,17 @@ export function HistoryList() {
             </Button>
           </Link>
         </div>
-        <Card>
+        <Card className="border-dashed shadow-sm">
           <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
-            <div className="rounded-full bg-muted p-4">
+            <div className="rounded-lg bg-primary/10 p-4">
               <Search className="h-8 w-8 text-muted-foreground" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-foreground">
-                No Research Yet
+                No research yet
               </h3>
               <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                Your research history will appear here. Start your first research
-                to see results.
+                Completed reports and in-progress runs will appear here.
               </p>
             </div>
             <Link href="/">
@@ -200,7 +199,7 @@ export function HistoryList() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">
+        <h2 className="text-2xl font-semibold tracking-tight text-foreground">
           Research History
           <span className="ml-2 text-sm font-normal text-muted-foreground">
             ({reports.length})
@@ -219,9 +218,9 @@ export function HistoryList() {
           <Link
             key={report.id}
             href={`/?report=${report.id}`}
-            className="block transition-transform duration-150 hover:scale-[1.01]"
+            className="block"
           >
-            <Card className="cursor-pointer border-2 transition-colors hover:border-primary/30 hover:shadow-md">
+            <Card className="cursor-pointer shadow-sm transition-colors hover:border-primary/40 hover:bg-primary/5">
               <CardContent className="flex items-center justify-between p-5">
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex items-center gap-2">

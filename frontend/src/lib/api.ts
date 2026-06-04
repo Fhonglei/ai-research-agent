@@ -70,13 +70,11 @@ export async function startResearch(
       for (const line of lines) {
         const trimmed = line.trim()
 
-        // Parse SSE event type
         if (trimmed.startsWith('event: ')) {
           currentEventType = trimmed.slice(7).trim()
           continue
         }
 
-        // Parse SSE data
         if (trimmed.startsWith('data: ')) {
           const jsonStr = trimmed.slice(6)
           if (jsonStr === '[DONE]') {
@@ -84,19 +82,17 @@ export async function startResearch(
           }
           const event = parseSSEEvent(currentEventType, jsonStr)
           onEvent(event)
-          // Reset event type for next event
           currentEventType = 'message'
           continue
         }
 
-        // Empty line signals end of an event — reset
+        // Empty line signals the end of an event; reset.
         if (trimmed === '') {
           currentEventType = 'message'
         }
       }
     }
 
-    // Process any remaining data in buffer
     const remaining = buffer.trim()
     if (remaining.startsWith('data: ')) {
       const jsonStr = remaining.slice(6)
@@ -137,7 +133,6 @@ export async function getHistory(): Promise<ResearchReport[]> {
   }
 
   const body = await response.json()
-  // Backend returns { reports, total, limit, offset }
   if (Array.isArray(body)) {
     return body
   }

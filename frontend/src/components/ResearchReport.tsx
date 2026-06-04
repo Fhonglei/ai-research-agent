@@ -35,7 +35,6 @@ export function ResearchReport({ report }: ResearchReportProps) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Clipboard API not available
       const textArea = document.createElement("textarea")
       textArea.value = report.markdown_content
       document.body.appendChild(textArea)
@@ -59,31 +58,28 @@ export function ResearchReport({ report }: ResearchReportProps) {
     URL.revokeObjectURL(url)
   }
 
-  // Collect all sources from all tasks
   const allSources = report.tasks
-    .filter((t) => t.sources.length > 0)
-    .flatMap((t) =>
-      t.sources.map((s) => ({
-        ...s,
-        subtopic: t.subtopic,
+    .filter((task) => task.sources.length > 0)
+    .flatMap((task) =>
+      task.sources.map((source) => ({
+        ...source,
+        subtopic: task.subtopic,
       }))
     )
 
-  // Remove duplicate sources by URL
   const uniqueSources = allSources.filter(
     (source, index, self) => index === self.findIndex((s) => s.url === source.url)
   )
 
   return (
-    <div className="space-y-6">
-      {/* Report Header */}
-      <Card>
+    <div className="space-y-5">
+      <Card className="overflow-hidden shadow-sm">
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-2xl">{report.topic}</CardTitle>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <CardTitle className="text-2xl leading-tight">{report.topic}</CardTitle>
               <CardDescription className="mt-2">
-                {report.subtopics.length} subtopics researched &middot;{" "}
+                {report.subtopics.length} research tracks -{" "}
                 {new Date(report.created_at).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
@@ -91,7 +87,7 @@ export function ResearchReport({ report }: ResearchReportProps) {
                 })}
               </CardDescription>
             </div>
-            <Badge variant="default" className="gap-1">
+            <Badge variant="default" className="w-fit gap-1">
               <CheckCircle2 className="h-3 w-3" />
               Complete
             </Badge>
@@ -99,9 +95,8 @@ export function ResearchReport({ report }: ResearchReportProps) {
         </CardHeader>
       </Card>
 
-      {/* Tabs */}
       <Tabs defaultValue="report" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid h-11 w-full grid-cols-3 rounded-lg bg-muted/80 p-1">
           <TabsTrigger value="report" className="gap-2">
             <FileText className="h-4 w-4" />
             Report
@@ -121,10 +116,9 @@ export function ResearchReport({ report }: ResearchReportProps) {
           </TabsTrigger>
         </TabsList>
 
-        {/* Report Tab */}
         <TabsContent value="report">
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="shadow-sm">
+            <CardContent className="p-5 sm:p-7">
               <div className="report-content prose prose-slate max-w-none dark:prose-invert">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {report.markdown_content}
@@ -134,16 +128,15 @@ export function ResearchReport({ report }: ResearchReportProps) {
           </Card>
         </TabsContent>
 
-        {/* Sources Tab */}
         <TabsContent value="sources">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Research Sources</CardTitle>
+          <Card className="shadow-sm">
+            <CardHeader className="border-b bg-muted/35">
+              <CardTitle className="text-lg">Sources</CardTitle>
               <CardDescription>
-                All sources used in this research, grouped by subtopic.
+                References used in this report, grouped by research track.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-5">
               {uniqueSources.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Link2 className="mb-3 h-10 w-10 text-muted-foreground/50" />
@@ -153,12 +146,11 @@ export function ResearchReport({ report }: ResearchReportProps) {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Group by subtopic */}
                   {report.tasks
-                    .filter((t) => t.sources.length > 0)
+                    .filter((task) => task.sources.length > 0)
                     .map((task) => (
                       <div key={task.id} className="space-y-2">
-                        <h3 className="text-md font-semibold text-foreground">
+                        <h3 className="text-sm font-semibold text-foreground">
                           {task.subtopic}
                         </h3>
                         <div className="space-y-2">
@@ -168,7 +160,7 @@ export function ResearchReport({ report }: ResearchReportProps) {
                               href={source.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-start gap-3 rounded-md border p-3 transition-colors hover:bg-muted/50"
+                              className="flex items-start gap-3 rounded-md border bg-background p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
                             >
                               <ExternalLink className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
                               <div className="min-w-0">
@@ -192,102 +184,91 @@ export function ResearchReport({ report }: ResearchReportProps) {
           </Card>
         </TabsContent>
 
-        {/* Download Tab */}
         <TabsContent value="download">
-          <Card>
-            <CardHeader>
+          <Card className="shadow-sm">
+            <CardHeader className="border-b bg-muted/35">
               <CardTitle className="text-lg">Download Report</CardTitle>
               <CardDescription>
                 Download this research report in your preferred format.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {/* Markdown Download */}
-                <Card className="border-2 transition-colors hover:border-primary/30">
-                  <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
-                    <FileType className="h-10 w-10 text-blue-500" />
-                    <div>
-                      <h3 className="font-semibold text-foreground">Markdown</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Raw markdown text file
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyMarkdown}
-                        className="gap-1"
-                      >
-                        {copied ? (
-                          <>
-                            <Check className="h-4 w-4" />
-                            Copied
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-4 w-4" />
-                            Copy
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={handleDownloadMarkdown}
-                        className="gap-1"
-                      >
-                        <FileDown className="h-4 w-4" />
-                        Download
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+            <CardContent className="p-5">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="flex flex-col items-center gap-3 rounded-lg border bg-background p-5 text-center transition-colors hover:border-primary/40">
+                  <FileType className="h-10 w-10 text-blue-500" />
+                  <div>
+                    <h3 className="font-semibold text-foreground">Markdown</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Raw markdown text file
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyMarkdown}
+                      className="gap-1"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-4 w-4" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4" />
+                          Copy
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleDownloadMarkdown}
+                      className="gap-1"
+                    >
+                      <FileDown className="h-4 w-4" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
 
-                {/* PDF Download */}
-                <Card className="border-2 transition-colors hover:border-primary/30">
-                  <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
-                    <FileText className="h-10 w-10 text-red-500" />
+                {[
+                  {
+                    label: "PDF",
+                    description: "Formatted PDF document",
+                    format: "pdf" as const,
+                    icon: <FileText className="h-10 w-10 text-red-500" />,
+                  },
+                  {
+                    label: "PowerPoint",
+                    description: "Presentation slides",
+                    format: "pptx" as const,
+                    icon: <Presentation className="h-10 w-10 text-orange-500" />,
+                  },
+                ].map((option) => (
+                  <div
+                    key={option.format}
+                    className="flex flex-col items-center gap-3 rounded-lg border bg-background p-5 text-center transition-colors hover:border-primary/40"
+                  >
+                    {option.icon}
                     <div>
-                      <h3 className="font-semibold text-foreground">PDF</h3>
+                      <h3 className="font-semibold text-foreground">{option.label}</h3>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        Formatted PDF document
+                        {option.description}
                       </p>
                     </div>
                     <a
-                      href={getDownloadUrl(report.id, "pdf")}
+                      href={getDownloadUrl(report.id, option.format)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-9 px-3 bg-primary text-primary-foreground hover:bg-primary/90"
+                      className="inline-flex h-9 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <FileDown className="h-4 w-4" />
                       Download
                     </a>
-                  </CardContent>
-                </Card>
-
-                {/* PPTX Download */}
-                <Card className="border-2 transition-colors hover:border-primary/30">
-                  <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
-                    <Presentation className="h-10 w-10 text-orange-500" />
-                    <div>
-                      <h3 className="font-semibold text-foreground">PowerPoint</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Presentation slides
-                      </p>
-                    </div>
-                    <a
-                      href={getDownloadUrl(report.id, "pptx")}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-9 px-3 bg-primary text-primary-foreground hover:bg-primary/90"
-                    >
-                      <FileDown className="h-4 w-4" />
-                      Download
-                    </a>
-                  </CardContent>
-                </Card>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>

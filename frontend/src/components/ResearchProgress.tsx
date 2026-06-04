@@ -9,6 +9,8 @@ import {
   AlertCircle,
   FileText,
   Brain,
+  ListChecks,
+  Radio,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -26,11 +28,11 @@ interface ResearchProgressProps {
 function getStatusIcon(status: string) {
   switch (status) {
     case "complete":
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />
+      return <CheckCircle2 className="h-4 w-4 text-emerald-600" />
     case "searching":
-      return <Search className="h-4 w-4 animate-pulse text-blue-500" />
+      return <Search className="h-4 w-4 animate-pulse text-primary" />
     case "summarizing":
-      return <FileText className="h-4 w-4 animate-pulse text-purple-500" />
+      return <FileText className="h-4 w-4 animate-pulse text-amber-600" />
     case "pending":
       return <Clock className="h-4 w-4 text-muted-foreground" />
     case "error":
@@ -94,7 +96,7 @@ function getProgressPercentage(status: string, tasks: ResearchTask[]): number {
 function getStatusMessage(status: string, subtopics: string[], tasks: ResearchTask[]): string {
   switch (status) {
     case "decomposing":
-      return "Decomposing topic into subtopics..."
+      return "Breaking the topic into focused research tracks..."
     case "researching": {
       const activeTask = tasks.find(
         (t) => t.status === "searching" || t.status === "summarizing"
@@ -104,16 +106,16 @@ function getStatusMessage(status: string, subtopics: string[], tasks: ResearchTa
           activeTask.status === "searching" ? "Searching" : "Summarizing"
         return `${action}: "${activeTask.subtopic}"...`
       }
-      return "Researching subtopics..."
+      return "Collecting sources and summaries for each track..."
     }
     case "synthesizing":
-      return "Synthesizing research into final report..."
+      return "Synthesizing findings into the final report..."
     case "complete":
-      return "Research complete!"
+      return "Research complete."
     case "error":
-      return "An error occurred during research."
+      return "Research stopped because an error occurred."
     default:
-      return "Preparing..."
+      return "Preparing research workspace..."
   }
 }
 
@@ -128,20 +130,20 @@ export function ResearchProgress({
   const isComplete = status === "complete"
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
+    <Card className="w-full overflow-hidden shadow-sm">
+      <CardHeader className="border-b bg-muted/35">
+        <CardTitle className="flex items-center gap-2 text-base">
           {isComplete ? (
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
           ) : (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           )}
-          Research Progress
+          Live research progress
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-5">
         {/* Progress Bar */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-foreground">{statusMessage}</span>
             <span className="text-muted-foreground">{progress}%</span>
@@ -155,7 +157,15 @@ export function ResearchProgress({
         {/* Subtopics List */}
         {subtopics.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground">Subtopics</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <ListChecks className="h-4 w-4 text-primary" />
+                Research tracks
+              </h4>
+              <Badge variant="outline" className="text-xs">
+                {tasks.filter((task) => task.status === "complete").length}/{tasks.length}
+              </Badge>
+            </div>
             <ul className="space-y-2">
               {subtopics.map((subtopic, idx) => {
                 const task = tasks.find((t) => t.subtopic === subtopic)
@@ -165,11 +175,11 @@ export function ResearchProgress({
                   <li
                     key={idx}
                     className={cn(
-                      "flex items-center gap-3 rounded-md border px-3 py-2 text-sm transition-colors",
+                      "flex items-center gap-3 rounded-md border px-3 py-3 text-sm transition-colors",
                       taskStatus === "searching" || taskStatus === "summarizing"
-                        ? "border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950"
+                        ? "border-primary/30 bg-primary/5"
                         : taskStatus === "complete"
-                          ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950"
+                          ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950"
                           : "border-border bg-card"
                     )}
                   >
@@ -191,27 +201,28 @@ export function ResearchProgress({
 
         {/* Empty state when no subtopics yet */}
         {subtopics.length === 0 && status !== "complete" && (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Brain className="mb-3 h-10 w-10 animate-pulse text-primary/50" />
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
+            <Brain className="mb-3 h-10 w-10 animate-pulse text-primary/60" />
             <p className="text-sm text-muted-foreground">
-              Analyzing your topic and breaking it down...
+              Analyzing the topic and preparing research tracks.
             </p>
           </div>
         )}
 
         {/* Recent events log */}
         {events.length > 0 && (
-          <div className="space-y-1">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Activity Log
+          <div className="space-y-2">
+            <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Radio className="h-3.5 w-3.5" />
+              Activity log
             </h4>
-            <div className="max-h-40 space-y-1 overflow-y-auto rounded-md bg-muted/50 p-3 text-xs">
+            <div className="max-h-52 space-y-2 overflow-y-auto rounded-md border bg-muted/40 p-3 text-xs">
               {events.slice(-8).map((event, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2 text-muted-foreground"
+                  className="flex items-start gap-2 rounded bg-background/70 px-2 py-1.5 text-muted-foreground"
                 >
-                  <span className="mt-0.5 flex-shrink-0 text-primary">&#9679;</span>
+                  <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                   <span>{event.message}</span>
                 </div>
               ))}

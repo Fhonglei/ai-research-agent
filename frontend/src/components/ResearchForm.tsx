@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { Search, Loader2, Zap, Globe, Microscope } from "lucide-react"
+import { Search, Loader2, Zap, Globe, Microscope, ArrowRight } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -46,34 +46,39 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
   }
 
   return (
-    <Card className="w-full border-2 transition-all duration-300 hover:border-primary/30">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <Search className="h-5 w-5 text-primary" />
-          Start New Research
+    <Card className="w-full overflow-hidden border shadow-sm">
+      <CardHeader className="border-b bg-muted/35">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Search className="h-4 w-4" />
+          </span>
+          New research
         </CardTitle>
-        <CardDescription>
-          Enter a research topic and select the depth of analysis you need.
+        <CardDescription className="text-xs">
+          Describe the question clearly; the agent will break it into research tasks.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Topic
+            </label>
             <Textarea
-              placeholder="e.g., Research the AI internship market in 2026"
+              placeholder="e.g. Research the AI internship market in 2026, including demand, skills, and hiring channels."
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               disabled={isLoading}
-              rows={4}
-              className="resize-none text-base"
+              rows={6}
+              className="resize-none border-0 bg-muted/60 text-base shadow-none ring-1 ring-border focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
 
           <div>
-            <label className="mb-3 block text-sm font-medium text-foreground">
-              Research Depth
+            <label className="mb-3 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Depth
             </label>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2">
               {depthOptions.map((option) => (
                 <button
                   key={option.value}
@@ -81,17 +86,17 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
                   disabled={isLoading}
                   onClick={() => setDepth(option.value)}
                   className={cn(
-                    "flex flex-col items-center gap-2 rounded-lg border-2 p-4 text-center transition-all duration-200",
-                    "hover:border-primary/50 hover:shadow-md",
+                    "flex items-center gap-3 rounded-md border p-3 text-left transition-all duration-200",
+                    "hover:border-primary/50 hover:bg-primary/5",
                     "disabled:cursor-not-allowed disabled:opacity-50",
                     depth === option.value
-                      ? "border-primary bg-primary/5 ring-1 ring-primary"
-                      : "border-border bg-card"
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-border bg-background"
                   )}
                 >
                   <div
                     className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-full",
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-md",
                       depth === option.value
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground"
@@ -99,7 +104,7 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
                   >
                     {option.icon}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div
                       className={cn(
                         "text-sm font-semibold",
@@ -112,6 +117,9 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
                       {option.description}
                     </div>
                   </div>
+                  {depth === option.value && (
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                  )}
                 </button>
               ))}
             </div>
@@ -121,17 +129,18 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
             type="submit"
             size="lg"
             disabled={isLoading || !topic.trim()}
-            className="w-full gap-2 sm:w-auto"
+            className="h-11 w-full gap-2"
           >
             {isLoading ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Researching...
+                Running research
               </>
             ) : (
               <>
                 <Search className="h-5 w-5" />
-                Start Research
+                Start research
+                <ArrowRight className="h-4 w-4" />
               </>
             )}
           </Button>
