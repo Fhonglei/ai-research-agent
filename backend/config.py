@@ -1,5 +1,16 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from typing import Optional
+
+_BACKEND_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _BACKEND_DIR.parent
+
+
+def _env_file_paths() -> tuple[str, ...]:
+    """Load repo-root .env first, then backend/.env (later files override)."""
+    paths = (_PROJECT_ROOT / ".env", _BACKEND_DIR / ".env")
+    existing = tuple(str(p) for p in paths if p.exists())
+    return existing or (str(_BACKEND_DIR / ".env"),)
 
 
 class Config(BaseSettings):
@@ -27,7 +38,7 @@ class Config(BaseSettings):
     REPORTS_DIR: str = "reports"
 
     model_config = {
-        "env_file": ".env",
+        "env_file": _env_file_paths(),
         "env_file_encoding": "utf-8",
         "extra": "ignore",
     }

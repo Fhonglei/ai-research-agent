@@ -13,7 +13,7 @@
 
 The **AI Research Agent** automates the research workflow end-to-end. You provide a topic, and the system:
 
-1. **Decomposes** the topic into focused subtopics using Claude AI
+1. **Decomposes** the topic into focused subtopics using DeepSeek
 2. **Searches** the web for relevant, up-to-date information via Tavily
 3. **Fetches & analyzes** source content with intelligent extraction
 4. **Summarizes** each subtopic with key insights and citations
@@ -113,7 +113,7 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for a detailed design document with 
 
 - Python 3.12+
 - Node.js 20+
-- API keys for [Anthropic](https://console.anthropic.com/), [Tavily](https://app.tavily.com/), and optionally [Supabase](https://app.supabase.com/)
+- API keys for [DeepSeek](https://platform.deepseek.com/), [Tavily](https://app.tavily.com/) (optional — DuckDuckGo fallback), and optionally [Supabase](https://app.supabase.com/)
 
 ### 1. Clone & Configure
 
@@ -193,9 +193,9 @@ data: {"report_id": "abc-123", "markdown_content": "# Report...", ...}
 
 | Depth | Subtopic Count | Description |
 |-------|---------------|-------------|
-| `quick` | 2-3 | Brief overview for quick answers |
-| `standard` | 4-5 | Balanced depth (default) |
-| `deep` | 6-8 | Exhaustive research with more sources |
+| `quick` | 3-4 | Brief overview for quick answers |
+| `standard` | 4-6 | Balanced depth (default) |
+| `deep` | 5-7 | Exhaustive research with more sources |
 
 See [API.md](docs/API.md) for full API reference with request/response examples.
 
@@ -241,7 +241,7 @@ ai-research-agent/
 
 ### 1. Web Content Extraction Quality
 
-**Problem**: Many web pages have messy HTML — navigation bars, ads, cookie banners, and comment sections get mixed with the actual content. Initial attempts with naive `body.get_text()` produced unusable noise that degraded Claude's summary quality.
+**Problem**: Many web pages have messy HTML — navigation bars, ads, cookie banners, and comment sections get mixed with the actual content. Initial attempts with naive `body.get_text()` produced unusable noise that degraded the LLM's summary quality.
 
 **Solution**: Built a multi-step content extraction pipeline in `content_fetcher.py`:
 - Target semantic HTML5 elements (`<article>`, `<main>`) first
@@ -264,13 +264,13 @@ ai-research-agent/
 
 ### 4. Token Cost Management
 
-**Problem**: Each research task involves multiple Claude API calls (decomposition + N× summarization + synthesis). Without careful prompt design, token usage could spiral — especially when feeding full web page content to Claude.
+**Problem**: Each research task involves multiple LLM API calls (decomposition + N× summarization + synthesis). Without careful prompt design, token usage could spiral — especially when feeding full web page content to the model.
 
 **Solution**:
-- Content is truncated to 5000 chars before being sent to Claude
+- Content is truncated to 5000 chars before being sent to the LLM
 - Search results are capped at 5 per subtopic, only top 3 are deep-fetched
 - Depth levels (`quick`/`standard`/`deep`) control subtopic count
-- Claude's `max_tokens` is set to 4096 for summaries, preventing runaway generation
+- `max_tokens` is set to 4096 for summaries, preventing runaway generation
 - Average cost per standard research: ~$0.03-0.08
 
 ### 5. Parallel Research Tasks Error Isolation

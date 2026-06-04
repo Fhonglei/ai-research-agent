@@ -79,7 +79,9 @@ export function HistoryList() {
   }
 
   function formatDate(dateStr: string): string {
+    if (!dateStr) return "Unknown date"
     const date = new Date(dateStr)
+    if (Number.isNaN(date.getTime())) return "Unknown date"
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
     const diffMins = Math.floor(diffMs / 60000)

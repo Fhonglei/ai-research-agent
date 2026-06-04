@@ -224,6 +224,27 @@ class Orchestrator:
             final_markdown = generate_markdown(report)
             report.markdown_content = final_markdown
 
+            # Persist markdown + metadata locally (history / get_report without Supabase)
+            md_path = report_dir / "report.md"
+            md_path.write_text(final_markdown, encoding="utf-8")
+            meta_path = report_dir / "meta.json"
+            meta_path.write_text(
+                json.dumps(
+                    {
+                        "id": report_id,
+                        "topic": topic,
+                        "subtopics": report.subtopics,
+                        "markdown_content": final_markdown,
+                        "status": "complete",
+                        "created_at": report.created_at,
+                        "tasks": [t.model_dump() for t in resolved_tasks],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
             # Generate PDF
             pdf_path = str(report_dir / "report.pdf")
             pdf_result = await asyncio.to_thread(

@@ -136,5 +136,20 @@ export async function getHistory(): Promise<ResearchReport[]> {
     throw new Error(`Failed to fetch history: ${response.status} ${errorText}`)
   }
 
-  return response.json()
+  const body = await response.json()
+  // Backend returns { reports, total, limit, offset }
+  if (Array.isArray(body)) {
+    return body
+  }
+  if (body && Array.isArray(body.reports)) {
+    return body.reports.map((r: ResearchReport) => ({
+      ...r,
+      subtopics: r.subtopics ?? [],
+      tasks: r.tasks ?? [],
+      markdown_content: r.markdown_content ?? '',
+      status: r.status ?? 'complete',
+      created_at: r.created_at ?? '',
+    }))
+  }
+  return []
 }

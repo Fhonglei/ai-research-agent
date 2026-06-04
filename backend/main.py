@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -60,13 +61,25 @@ def _get_supabase_client():
 # Routes
 # ---------------------------------------------------------------------------
 
+def _api_key_configured(key: str) -> bool:
+    """True if the key looks set (not empty or placeholder)."""
+    if not key or not key.strip():
+        return False
+    lowered = key.strip().lower()
+    return "your-" not in lowered and "sk-your" not in lowered and "tvly-your" not in lowered
+
+
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint."""
+    deepseek_ok = _api_key_configured(config.DEEPSEEK_API_KEY)
+    status = "healthy" if deepseek_ok else "degraded"
     return {
-        "status": "healthy",
+        "status": status,
         "version": "1.0.0",
         "model": config.MODEL,
+        "deepseek_configured": deepseek_ok,
+        "tavily_configured": bool(config.TAVILY_API_KEY and _api_key_configured(config.TAVILY_API_KEY)),
         "supabase_configured": bool(config.SUPABASE_URL and config.SUPABASE_ANON_KEY),
     }
 
@@ -136,15 +149,28 @@ async def get_report(report_id: str):
     if not report_dir.exists():
         raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found.")
 
-    # Try to read markdown from local file
+    meta_file = report_dir / "meta.json"
+    if meta_file.exists():
+        try:
+            with open(meta_file, "r", encoding="utf-8") as f:
+                return JSONResponse(content=json.load(f))
+        except (json.JSONDecodeError, OSError) as e:
+            logger.warning(f"Failed to read meta.json for {report_id}: {e}")
+
     md_file = report_dir / "report.md"
     if md_file.exists():
         with open(md_file, "r", encoding="utf-8") as f:
             markdown_content = f.read()
         return JSONResponse(content={
             "id": report_id,
+            "topic": report_id,
+            "subtopics": [],
+            "tasks": [],
             "markdown_content": markdown_content,
             "status": "complete",
+            "created_at": datetime.fromtimestamp(
+                md_file.stat().st_mtime, tz=timezone.utc
+            ).isoformat(),
         })
 
     raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found.")
@@ -183,11 +209,16 @@ async def download_report(
     client = _get_supabase_client()
     if client:
         try:
+            from fastapi.responses import Response
+
             data = client.storage.from_("reports").download(f"{report_id}/{filename}")
-            import io
-            return JSONResponse(
-                content={"message": "File download from Supabase handled client-side"},
-                headers={"X-File-Path": f"{report_id}/{filename}"},
+            file_bytes = data if isinstance(data, (bytes, bytearray)) else bytes(data)
+            return Response(
+                content=file_bytes,
+                media_type=content_type,
+                headers={
+                    "Content-Disposition": f'attachment; filename="research_report.{format}"',
+                },
             )
         except Exception as e:
             logger.warning(f"Supabase download failed: {e}")
@@ -232,15 +263,28 @@ async def get_history(
     reports = []
     if REPORTS_DIR.exists():
         for entry in sorted(REPORTS_DIR.iterdir(), key=os.path.getmtime, reverse=True):
-            if entry.is_dir():
-                md_file = entry / "report.md"
-                pdf_file = entry / "report.pdf"
-                reports.append({
-                    "id": entry.name,
-                    "has_pdf": pdf_file.exists(),
-                    "has_pptx": (entry / "report.pptx").exists(),
-                    "created_at": "",
-                })
+            if not entry.is_dir():
+                continue
+            meta_file = entry / "meta.json"
+            if meta_file.exists():
+                try:
+                    with open(meta_file, "r", encoding="utf-8") as f:
+                        reports.append(json.load(f))
+                    continue
+                except (json.JSONDecodeError, OSError) as e:
+                    logger.warning(f"Invalid meta.json for {entry.name}: {e}")
+            md_file = entry / "report.md"
+            reports.append({
+                "id": entry.name,
+                "topic": entry.name,
+                "subtopics": [],
+                "markdown_content": "",
+                "tasks": [],
+                "status": "complete" if md_file.exists() else "unknown",
+                "created_at": datetime.fromtimestamp(
+                    entry.stat().st_mtime, tz=timezone.utc
+                ).isoformat(),
+            })
 
     paginated = reports[offset:offset + limit]
     return JSONResponse(content={
