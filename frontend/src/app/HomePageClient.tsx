@@ -136,6 +136,8 @@ export default function HomePageClient() {
             depth: event.data.depth || depthRef.current,
             status: "complete",
             created_at: event.data.created_at || new Date().toISOString(),
+            pdf_available: Boolean(event.data.pdf_available),
+            pptx_available: Boolean(event.data.pptx_available),
           }
           setSubtopics(nextSubtopics)
           setTasks(tasksRef.current)
@@ -217,7 +219,10 @@ export default function HomePageClient() {
   const hasActiveResearch = status !== "pending" || Boolean(report)
 
   return (
-    <div className="min-h-[calc(100vh-121px)] bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.08),transparent_34rem)]">
+    <div
+      translate="no"
+      className="notranslate min-h-[calc(100vh-121px)] bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.08),transparent_34rem)]"
+    >
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[390px_minmax(0,1fr)] lg:py-8">
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <div className="space-y-3">

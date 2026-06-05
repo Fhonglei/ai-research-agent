@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "AI Research Agent",
   description:
     "AI-powered research automation that generates comprehensive reports on any topic.",
+  other: {
+    google: "notranslate",
+  },
 }
 
 export default function RootLayout({
@@ -14,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" translate="no" className="notranslate">
+      <body translate="no" className="notranslate">
         <div className="flex min-h-screen flex-col">
           <Navbar />
           <main className="flex-1">{children}</main>

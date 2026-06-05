@@ -147,7 +147,10 @@ async def get_report(report_id: str):
     if meta_file.exists():
         try:
             with open(meta_file, "r", encoding="utf-8") as f:
-                return JSONResponse(content=json.load(f))
+                metadata = json.load(f)
+            metadata["pdf_available"] = (report_dir / "report.pdf").exists()
+            metadata["pptx_available"] = (report_dir / "report.pptx").exists()
+            return JSONResponse(content=metadata)
         except (json.JSONDecodeError, OSError) as e:
             logger.warning(f"Failed to read meta.json for {report_id}: {e}")
 
@@ -261,10 +264,13 @@ async def get_history(
                 continue
             meta_file = entry / "meta.json"
             if meta_file.exists():
-                try:
-                    with open(meta_file, "r", encoding="utf-8") as f:
-                        reports.append(json.load(f))
-                    continue
+        try:
+            with open(meta_file, "r", encoding="utf-8") as f:
+                metadata = json.load(f)
+            metadata["pdf_available"] = (entry / "report.pdf").exists()
+            metadata["pptx_available"] = (entry / "report.pptx").exists()
+            reports.append(metadata)
+            continue
                 except (json.JSONDecodeError, OSError) as e:
                     logger.warning(f"Invalid meta.json for {entry.name}: {e}")
             md_file = entry / "report.md"

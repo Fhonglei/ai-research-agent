@@ -389,7 +389,7 @@ def markdown_to_pptx(markdown_content: str, output_path: str) -> str:
 
         # Parse markdown into sections
         sections = _parse_markdown_sections(markdown_content)
-        title_text = sections.pop(0) if sections else "Research Report"
+        title_text = sections.pop(0)[0] if sections else "Research Report"
 
         # ── Title Slide ──
         slide_layout = prs.slide_layouts[6]  # blank layout

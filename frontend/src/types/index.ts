@@ -23,6 +23,8 @@ export interface ResearchReport {
   status: 'pending' | 'in_progress' | 'decomposing' | 'researching' | 'synthesizing' | 'complete' | 'failed' | 'error'
   error_message?: string
   created_at: string
+  pdf_available?: boolean
+  pptx_available?: boolean
 }
 
 export interface SSEEvent {

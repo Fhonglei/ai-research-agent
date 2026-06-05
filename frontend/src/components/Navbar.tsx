@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Sparkles, History, Settings, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,13 +9,12 @@ import { getApiUrl } from "@/lib/api"
 
 export function Navbar() {
   const [showSettings, setShowSettings] = useState(false)
-  const [apiUrl, setApiUrl] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("api_url") || getApiUrl()
-    }
-    return getApiUrl()
-  })
+  const [apiUrl, setApiUrl] = useState("http://localhost:8000")
   const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    setApiUrl(getApiUrl())
+  }, [])
 
   const handleSave = () => {
     localStorage.setItem("api_url", apiUrl)

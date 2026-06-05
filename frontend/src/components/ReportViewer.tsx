@@ -30,7 +30,7 @@ export function ReportViewer({
   // Error state
   if (error || status === "error") {
     return (
-      <Card className="w-full border-destructive shadow-sm">
+      <Card translate="no" className="notranslate w-full border-destructive shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg text-destructive">
             <AlertCircle className="h-5 w-5" />
@@ -60,7 +60,10 @@ export function ReportViewer({
   // No research started yet
   if (status === "pending" || (!status && !report)) {
     return (
-      <div className="flex min-h-[520px] flex-col items-center justify-center rounded-lg border border-dashed bg-card/70 px-6 py-16 text-center shadow-sm">
+      <div
+        translate="no"
+        className="notranslate flex min-h-[520px] flex-col items-center justify-center rounded-lg border border-dashed bg-card/70 px-6 py-16 text-center shadow-sm"
+      >
         <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-primary/10">
           <Sparkles className="h-7 w-7 text-primary" />
         </div>

@@ -246,29 +246,45 @@ export function ResearchReport({ report }: ResearchReportProps) {
                     format: "pptx" as const,
                     icon: <Presentation className="h-10 w-10 text-orange-500" />,
                   },
-                ].map((option) => (
-                  <div
-                    key={option.format}
-                    className="flex flex-col items-center gap-3 rounded-lg border bg-background p-5 text-center transition-colors hover:border-primary/40"
-                  >
-                    {option.icon}
-                    <div>
-                      <h3 className="font-semibold text-foreground">{option.label}</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {option.description}
-                      </p>
-                    </div>
-                    <a
-                      href={getDownloadUrl(report.id, option.format)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex h-9 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                ].map((option) => {
+                  const isAvailable =
+                    option.format === "pdf"
+                      ? report.pdf_available !== false
+                      : report.pptx_available !== false
+
+                  return (
+                    <div
+                      key={option.format}
+                      className="flex flex-col items-center gap-3 rounded-lg border bg-background p-5 text-center transition-colors hover:border-primary/40"
                     >
-                      <FileDown className="h-4 w-4" />
-                      Download
-                    </a>
-                  </div>
-                ))}
+                      {option.icon}
+                      <div>
+                        <h3 className="font-semibold text-foreground">{option.label}</h3>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {isAvailable
+                            ? option.description
+                            : "File was not generated for this report"}
+                        </p>
+                      </div>
+                      {isAvailable ? (
+                        <a
+                          href={getDownloadUrl(report.id, option.format)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-9 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <FileDown className="h-4 w-4" />
+                          Download
+                        </a>
+                      ) : (
+                        <Button disabled size="sm" className="gap-1">
+                          <FileDown className="h-4 w-4" />
+                          Unavailable
+                        </Button>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>

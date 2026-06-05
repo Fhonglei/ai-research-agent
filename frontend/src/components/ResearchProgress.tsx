@@ -131,9 +131,11 @@ export function ResearchProgress({
   const progress = getProgressPercentage(status, tasks)
   const statusMessage = getStatusMessage(status, subtopics, tasks)
   const isComplete = status === "complete"
+  const recentEvents = events.slice(-8)
+  const firstRecentEventIndex = events.length - recentEvents.length
 
   return (
-    <Card className="w-full overflow-hidden shadow-sm">
+    <Card translate="no" className="notranslate w-full overflow-hidden shadow-sm">
       <CardHeader className="border-b bg-muted/35">
         <CardTitle className="flex items-center gap-2 text-base">
           {isComplete ? (
@@ -176,7 +178,7 @@ export function ResearchProgress({
 
                 return (
                   <li
-                    key={idx}
+                    key={`${subtopic}-${idx}`}
                     className={cn(
                       "flex items-center gap-3 rounded-md border px-3 py-3 text-sm transition-colors",
                       taskStatus === "searching" || taskStatus === "summarizing"
@@ -220,9 +222,9 @@ export function ResearchProgress({
               Activity log
             </h4>
             <div className="max-h-52 space-y-2 overflow-y-auto rounded-md border bg-muted/40 p-3 text-xs">
-              {events.slice(-8).map((event, idx) => (
+              {recentEvents.map((event, idx) => (
                 <div
-                  key={idx}
+                  key={`${firstRecentEventIndex + idx}-${event.type}`}
                   className="flex items-start gap-2 rounded bg-background/70 px-2 py-1.5 text-muted-foreground"
                 >
                   <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
