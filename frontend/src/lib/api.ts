@@ -1,11 +1,48 @@
 import { ResearchReport, SSEEvent, ResearchDepth } from '@/types'
 
+const DEFAULT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
 export function getApiUrl(): string {
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('api_url')
-    if (stored) return stored
+    if (stored) {
+      try {
+        const storedUrl = new URL(stored)
+        const currentUrl = new URL(window.location.href)
+        const pointsToFrontend =
+          storedUrl.hostname === currentUrl.hostname &&
+          storedUrl.port === currentUrl.port
+
+        if (!pointsToFrontend) {
+          return storedUrl.toString().replace(/\/$/, '')
+        }
+
+        localStorage.removeItem('api_url')
+      } catch {
+        localStorage.removeItem('api_url')
+      }
+    }
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  return DEFAULT_API_URL
+}
+
+export async function getHealth(): Promise<{
+  status: string
+  version: string
+  model: string
+  deepseek_configured: boolean
+  tavily_configured: boolean
+  supabase_configured: boolean
+}> {
+  const apiUrl = getApiUrl()
+  const response = await fetch(`${apiUrl}/api/health`)
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'Unknown error')
+    throw new Error(`Health check failed: ${response.status} ${errorText}`)
+  }
+
+  return response.json()
 }
 
 /**

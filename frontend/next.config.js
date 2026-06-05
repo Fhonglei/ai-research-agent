@@ -2,15 +2,15 @@
 const isProduction = process.env.NODE_ENV === 'production'
 
 const nextConfig = {
-  // Static export for GitHub Pages
-  output: 'export',
-
-  // GitHub Pages serves from repo subdirectory
-  basePath: isProduction ? '/ai-research-agent' : '',
-  assetPrefix: isProduction ? '/ai-research-agent' : '',
+  // Static export for GitHub Pages (production only)
+  ...(isProduction ? {
+    output: 'export',
+    basePath: '/ai-research-agent',
+    assetPrefix: '/ai-research-agent',
+  } : {}),
 
   images: {
-    unoptimized: true, // Required for static export
+    unoptimized: true,
   },
 }
 
