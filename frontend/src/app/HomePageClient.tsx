@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { Activity, CheckCircle2, Clock, Layers3, Search } from "lucide-react"
 import { ResearchForm } from "@/components/ResearchForm"
@@ -36,6 +36,10 @@ export default function HomePageClient() {
   const [error, setError] = useState<string | null>(null)
   const [subtopics, setSubtopics] = useState<string[]>([])
   const [tasks, setTasks] = useState<ResearchTask[]>([])
+  const topicRef = useRef("")
+  const depthRef = useRef<ResearchDepth>("standard")
+  const subtopicsRef = useRef<string[]>([])
+  const tasksRef = useRef<ResearchTask[]>([])
 
   const resetState = useCallback(() => {
     setStatus("pending")
@@ -45,6 +49,10 @@ export default function HomePageClient() {
     setError(null)
     setSubtopics([])
     setTasks([])
+    topicRef.current = ""
+    depthRef.current = "standard"
+    subtopicsRef.current = []
+    tasksRef.current = []
   }, [])
 
   const handleEvent = useCallback((event: SSEEvent) => {
@@ -58,38 +66,41 @@ export default function HomePageClient() {
       case "decomposed":
         if (event.data.subtopics) {
           const nextSubtopics = event.data.subtopics as string[]
+          const nextTasks = nextSubtopics.map((subtopic, index) => ({
+            id: `task-${index}`,
+            subtopic,
+            summary: "",
+            sources: [],
+            status: "pending" as const,
+          }))
+          subtopicsRef.current = nextSubtopics
+          tasksRef.current = nextTasks
           setSubtopics(nextSubtopics)
-          setTasks(
-            nextSubtopics.map((subtopic, index) => ({
-              id: `task-${index}`,
-              subtopic,
-              summary: "",
-              sources: [],
-              status: "pending" as const,
-            }))
-          )
+          setTasks(nextTasks)
           setStatus("researching")
         }
         break
 
       case "researching":
         if (event.data.subtopic) {
-          setTasks((prev) =>
-            prev.map((task) =>
+          setTasks((prev) => {
+            const nextTasks = prev.map((task) =>
               task.subtopic === event.data.subtopic ||
               task.id === `task-${event.data.index}`
                 ? { ...task, status: "searching" as const }
                 : task
             )
-          )
+            tasksRef.current = nextTasks
+            return nextTasks
+          })
         }
         setStatus("researching")
         break
 
       case "task_complete":
         if (event.data.task_id || event.data.subtopic) {
-          setTasks((prev) =>
-            prev.map((task) =>
+          setTasks((prev) => {
+            const nextTasks = prev.map((task) =>
               task.id === (event.data.task_id || `task-${event.data.index}`) ||
               task.subtopic === event.data.subtopic
                 ? {
@@ -102,7 +113,9 @@ export default function HomePageClient() {
                   }
                 : task
             )
-          )
+            tasksRef.current = nextTasks
+            return nextTasks
+          })
         }
         break
 
@@ -113,15 +126,20 @@ export default function HomePageClient() {
       case "complete":
         setStatus("complete")
         if (event.data) {
-          setReport((prev) => ({
-            id: event.data.report_id || prev?.id || "",
-            topic: event.data.topic || topic,
-            subtopics: event.data.subtopics || subtopics,
+          const nextSubtopics = event.data.subtopics || subtopicsRef.current
+          const nextReport: ResearchReport = {
+            id: event.data.report_id || "",
+            topic: event.data.topic || topicRef.current,
+            subtopics: nextSubtopics,
             markdown_content: event.data.markdown_content || "",
-            tasks,
+            tasks: tasksRef.current,
+            depth: event.data.depth || depthRef.current,
             status: "complete",
             created_at: event.data.created_at || new Date().toISOString(),
-          }))
+          }
+          setSubtopics(nextSubtopics)
+          setTasks(tasksRef.current)
+          setReport(nextReport)
         }
         break
 
@@ -133,12 +151,14 @@ export default function HomePageClient() {
       default:
         break
     }
-  }, [subtopics, tasks, topic])
+  }, [])
 
   const handleSubmit = useCallback(
     async (newTopic: string, depth: ResearchDepth) => {
       resetState()
       setTopic(newTopic)
+      topicRef.current = newTopic
+      depthRef.current = depth
       setIsLoading(true)
       setStatus("decomposing")
 

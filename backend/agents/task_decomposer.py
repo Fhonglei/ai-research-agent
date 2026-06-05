@@ -113,7 +113,7 @@ Guidelines:
 - Write subtopics as clear, descriptive phrases (not questions).
 
 IMPORTANT: Return your response as JSON only, with this exact shape:
-{"subtopics": ["Subtopic One Description", "Subtopic Two Description", "Subtopic Three Description"]}"""
+{{"subtopics": ["Subtopic One Description", "Subtopic Two Description", "Subtopic Three Description"]}}"""
 
     def _parse_subtopics(self, raw_output: str) -> list[str]:
         """

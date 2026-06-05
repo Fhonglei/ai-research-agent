@@ -1,6 +1,6 @@
 from typing import Optional
 
-from config import config
+from config import config, is_configured_value
 from utils.logger import logger
 
 
@@ -13,9 +13,10 @@ class SearchTool:
         self._tavily_key = api_key or config.TAVILY_API_KEY
         self._ddgs = None
 
-        if self._tavily_key and self._tavily_key.strip():
+        if is_configured_value(self._tavily_key):
             logger.info("SearchTool initialized (Tavily)")
         else:
+            self._tavily_key = None
             from ddgs import DDGS
             self._ddgs = DDGS()
             logger.info("SearchTool initialized (DuckDuckGo — no Tavily key)")
@@ -25,7 +26,7 @@ class SearchTool:
             logger.warning("Search called with empty query")
             return []
 
-        if self._tavily_key and self._tavily_key.strip():
+        if is_configured_value(self._tavily_key):
             return self._search_tavily(query, max_results)
 
         return self._search_duckduckgo(query, max_results)

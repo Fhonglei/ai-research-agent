@@ -10,6 +10,7 @@ from models.schemas import ResearchReport, ResearchTask, Source
 from agents.task_decomposer import TaskDecomposer
 from tools.web_search import SearchTool
 from tools.report_generator import generate_markdown, _parse_markdown_sections, _slugify, markdown_to_pdf
+from config import is_configured_value
 
 
 class TestDecomposer:
@@ -45,6 +46,23 @@ class TestDecomposer:
         result = decomposer._fallback_decompose("AI Safety", 3)
         assert len(result) == 3
         assert all("AI Safety" in r for r in result)
+
+    def test_build_prompt_keeps_json_example_literal(self, decomposer):
+        prompt = decomposer._build_prompt("AI Safety", 3, 4, "quick")
+        assert '{"subtopics": [' in prompt
+
+
+class TestConfig:
+    def test_placeholder_values_are_not_configured(self):
+        assert not is_configured_value("")
+        assert not is_configured_value("sk-your-deepseek-key-here")
+        assert not is_configured_value("tvly-your-key-here")
+        assert not is_configured_value("https://your-project.supabase.co")
+
+    def test_realistic_values_are_configured(self):
+        assert is_configured_value("sk-real-key")
+        assert is_configured_value("tvly-real-key")
+        assert is_configured_value("https://abc123.supabase.co")
 
 
 class TestSearchTool:

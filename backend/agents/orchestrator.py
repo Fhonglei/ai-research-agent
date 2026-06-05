@@ -262,7 +262,7 @@ class Orchestrator:
             # ── Stage 5: Save to Supabase (if configured) ──
             pdf_url = ""
             pptx_url = ""
-            if config.SUPABASE_URL and config.SUPABASE_ANON_KEY:
+            if config.supabase_configured:
                 try:
                     yield {
                         "event": "saving",
@@ -286,6 +286,7 @@ class Orchestrator:
                     "message": "Research report complete!",
                     "report_id": report_id,
                     "topic": topic,
+                    "depth": depth,
                     "subtopics": report.subtopics,
                     "markdown_content": final_markdown,
                     "pdf_available": bool(pdf_result),

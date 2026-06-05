@@ -4,6 +4,13 @@ from typing import Optional
 
 _BACKEND_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _BACKEND_DIR.parent
+_PLACEHOLDER_MARKERS = (
+    "your-",
+    "sk-your",
+    "tvly-your",
+    "your-project",
+    "...",
+)
 
 
 def _env_file_paths() -> tuple[str, ...]:
@@ -11,6 +18,14 @@ def _env_file_paths() -> tuple[str, ...]:
     paths = (_PROJECT_ROOT / ".env", _BACKEND_DIR / ".env")
     existing = tuple(str(p) for p in paths if p.exists())
     return existing or (str(_BACKEND_DIR / ".env"),)
+
+
+def is_configured_value(value: Optional[str]) -> bool:
+    """Return True when an env value is non-empty and not an example placeholder."""
+    if not value or not value.strip():
+        return False
+    lowered = value.strip().lower()
+    return not any(marker in lowered for marker in _PLACEHOLDER_MARKERS)
 
 
 class Config(BaseSettings):
@@ -46,6 +61,23 @@ class Config(BaseSettings):
         if self.LLM_PROVIDER.lower() == "anthropic":
             return self.ANTHROPIC_MODEL
         return self.MODEL
+
+    @property
+    def llm_configured(self) -> bool:
+        if self.LLM_PROVIDER.lower() == "anthropic":
+            return is_configured_value(self.ANTHROPIC_API_KEY)
+        return is_configured_value(self.DEEPSEEK_API_KEY)
+
+    @property
+    def tavily_configured(self) -> bool:
+        return is_configured_value(self.TAVILY_API_KEY)
+
+    @property
+    def supabase_configured(self) -> bool:
+        return (
+            is_configured_value(self.SUPABASE_URL)
+            and is_configured_value(self.SUPABASE_ANON_KEY)
+        )
 
     # Report storage directory
     REPORTS_DIR: str = "reports"

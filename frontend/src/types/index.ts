@@ -10,7 +10,7 @@ export interface ResearchTask {
   subtopic: string
   summary: string
   sources: Source[]
-  status: 'pending' | 'searching' | 'summarizing' | 'complete' | 'error'
+  status: 'pending' | 'searching' | 'summarizing' | 'complete' | 'failed' | 'error'
 }
 
 export interface ResearchReport {

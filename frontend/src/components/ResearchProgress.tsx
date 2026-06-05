@@ -36,6 +36,7 @@ function getStatusIcon(status: string) {
     case "pending":
       return <Clock className="h-4 w-4 text-muted-foreground" />
     case "error":
+    case "failed":
       return <AlertCircle className="h-4 w-4 text-destructive" />
     default:
       return <Clock className="h-4 w-4 text-muted-foreground" />
@@ -50,6 +51,7 @@ function getStatusBadgeVariant(status: string): "default" | "secondary" | "destr
     case "summarizing":
       return "secondary"
     case "error":
+    case "failed":
       return "destructive"
     default:
       return "outline"
@@ -67,6 +69,7 @@ function getStatusLabel(status: string): string {
     case "complete":
       return "Complete"
     case "error":
+    case "failed":
       return "Error"
     default:
       return "Unknown"

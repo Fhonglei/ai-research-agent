@@ -44,7 +44,7 @@ orchestrator = Orchestrator()
 
 def _get_supabase_client():
     """Get a Supabase client if configured, else None."""
-    if not config.SUPABASE_URL or not config.SUPABASE_ANON_KEY:
+    if not config.supabase_configured:
         return None
     try:
         from supabase import create_client
@@ -61,22 +61,11 @@ def _get_supabase_client():
 # Routes
 # ---------------------------------------------------------------------------
 
-def _api_key_configured(key: str) -> bool:
-    """True if the key looks set (not empty or placeholder)."""
-    if not key or not key.strip():
-        return False
-    lowered = key.strip().lower()
-    return "your-" not in lowered and "sk-your" not in lowered and "tvly-your" not in lowered
-
-
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint."""
     provider = config.LLM_PROVIDER.lower()
-    if provider == "anthropic":
-        llm_ok = bool(config.ANTHROPIC_API_KEY and config.ANTHROPIC_API_KEY.strip())
-    else:
-        llm_ok = _api_key_configured(config.DEEPSEEK_API_KEY or "")
+    llm_ok = config.llm_configured
     status = "healthy" if llm_ok else "degraded"
     return {
         "status": status,
@@ -84,8 +73,8 @@ async def health_check():
         "provider": provider,
         "model": config.active_model,
         "llm_configured": llm_ok,
-        "tavily_configured": bool(config.TAVILY_API_KEY and _api_key_configured(config.TAVILY_API_KEY)),
-        "supabase_configured": bool(config.SUPABASE_URL and config.SUPABASE_ANON_KEY),
+        "tavily_configured": config.tavily_configured,
+        "supabase_configured": config.supabase_configured,
     }
 
 
@@ -339,7 +328,7 @@ async def startup_event():
     logger.info("AI Research Agent Backend starting up")
     logger.info(f"Model: {config.MODEL}")
     logger.info(f"Host: {config.BACKEND_HOST}:{config.BACKEND_PORT}")
-    logger.info(f"Supabase: {'Configured' if config.SUPABASE_URL else 'Not configured'}")
+    logger.info(f"Supabase: {'Configured' if config.supabase_configured else 'Not configured'}")
     logger.info(f"Reports directory: {REPORTS_DIR.absolute()}")
     logger.info("=" * 60)
 
