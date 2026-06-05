@@ -19,7 +19,8 @@ export interface ResearchReport {
   subtopics: string[]
   markdown_content: string
   tasks: ResearchTask[]
-  status: 'pending' | 'decomposing' | 'researching' | 'synthesizing' | 'complete' | 'error'
+  depth: string
+  status: 'pending' | 'in_progress' | 'decomposing' | 'researching' | 'synthesizing' | 'complete' | 'failed' | 'error'
   error_message?: string
   created_at: string
 }

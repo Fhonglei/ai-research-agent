@@ -1,6 +1,6 @@
 from typing import Optional
-from openai import OpenAI
 from config import config
+from llm.client import LLMClient
 from models.schemas import ResearchTask
 from utils.logger import logger
 
@@ -19,11 +19,8 @@ class Synthesizer:
             api_key: DeepSeek API key. Falls back to config.
             model: Model to use. Falls back to config.MODEL.
         """
-        self.client = OpenAI(
-            api_key=api_key or config.DEEPSEEK_API_KEY,
-            base_url=config.DEEPSEEK_BASE_URL,
-        )
-        self.model = model or config.MODEL
+        self.llm = LLMClient(api_key=api_key, model=model)
+        self.model = self.llm.model
         logger.info(f"Synthesizer initialized with model={self.model}")
 
     def synthesize(self, topic: str, tasks: list[ResearchTask]) -> str:
@@ -68,27 +65,19 @@ class Synthesizer:
 
             prompt = self._build_synthesis_prompt(topic, task_context, failed_tasks)
 
-            response = self.client.chat.completions.create(
-                model=self.model,
+            markdown_report = self.llm.complete(
+                system=(
+                    "You are a senior research director at a top-tier research firm. "
+                    "Your job is to synthesize individual research summaries into "
+                    "a polished, professional research report in markdown format. "
+                    "The report should be comprehensive yet readable, with clear "
+                    "structure and actionable insights. Write in a confident, "
+                    "authoritative voice while remaining objective and data-driven."
+                ),
+                user=prompt,
                 max_tokens=8192,
                 temperature=0.6,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a senior research director at a top-tier research firm. "
-                            "Your job is to synthesize individual research summaries into "
-                            "a polished, professional research report in markdown format. "
-                            "The report should be comprehensive yet readable, with clear "
-                            "structure and actionable insights. Write in a confident, "
-                            "authoritative voice while remaining objective and data-driven."
-                        ),
-                    },
-                    {"role": "user", "content": prompt},
-                ],
             )
-
-            markdown_report = response.choices[0].message.content.strip()
 
             # Ensure the report starts with a proper H1 title
             if not markdown_report.startswith("# "):

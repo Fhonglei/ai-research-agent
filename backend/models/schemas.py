@@ -36,6 +36,7 @@ class ResearchReport(BaseModel):
     subtopics: list[str] = Field(default_factory=list, description="List of subtopics investigated")
     markdown_content: str = Field(default="", description="Full markdown report content")
     tasks: list[ResearchTask] = Field(default_factory=list, description="All research tasks")
+    depth: str = Field(default="standard", description="Research depth: quick, standard, or deep")
     status: str = Field(default="pending", description="Report status: pending, in_progress, complete, failed")
     created_at: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat(),

@@ -1,6 +1,12 @@
+import re
 import httpx
 from bs4 import BeautifulSoup
 from utils.logger import logger
+
+
+_PRIVATE_IP_RE = re.compile(
+    r"^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.0\.0\.0|localhost)",
+)
 
 
 class ContentFetcher:
@@ -51,9 +57,16 @@ class ContentFetcher:
             logger.warning("fetch_content called with empty URL")
             return ""
 
+        url = url.strip()
+
+        # Reject non-http schemes and private-network addresses
+        if not url.startswith(("http://", "https://")):
+            logger.warning(f"Rejected non-http URL: {url}")
+            return ""
+
         try:
             logger.info(f"Fetching content from: {url}")
-            response = self.client.get(url.strip())
+            response = self.client.get(url)
             response.raise_for_status()
 
             content_type = response.headers.get("content-type", "")
@@ -70,24 +83,32 @@ class ContentFetcher:
                 for tag in soup.find_all(tag_name):
                     tag.decompose()
 
-            # Try to get the main content area first
-            body = soup.find("body")
-            if body is None:
-                logger.warning(f"No <body> tag found in {url}")
+            # Prefer semantic content containers, then fall back to <body>
+            container: BeautifulSoup | None = None
+            for tag_name in ("article", "main", '[role="main"]'):
+                container = soup.find(tag_name)
+                if container is not None:
+                    break
+            if container is None:
+                container = soup.find("body")
+            if container is None:
+                logger.warning(f"No content container found in {url}")
                 return ""
 
             # Remove hidden elements and empty tags
-            for tag in body.find_all(True):
+            for tag in container.find_all(True):
                 style = tag.get("style", "")
                 if "display:none" in style or "display: none" in style:
                     tag.decompose()
                     continue
-                # Remove tags with no text and no meaningful children
+                aria = tag.get("aria-hidden", "")
+                if aria and aria.lower() == "true":
+                    tag.decompose()
+                    continue
                 if not tag.get_text(strip=True) and tag.name not in ("br", "hr", "img"):
                     tag.decompose()
 
-            # Extract text from remaining body
-            text = body.get_text(separator=" ", strip=True)
+            text = container.get_text(separator=" ", strip=True)
 
             # Clean up whitespace
             text = " ".join(text.split())

@@ -29,19 +29,18 @@ export function getApiUrl(): string {
 export async function getHealth(): Promise<{
   status: string
   version: string
+  provider: string
   model: string
-  deepseek_configured: boolean
+  llm_configured: boolean
   tavily_configured: boolean
   supabase_configured: boolean
 }> {
   const apiUrl = getApiUrl()
   const response = await fetch(`${apiUrl}/api/health`)
-
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unknown error')
     throw new Error(`Health check failed: ${response.status} ${errorText}`)
   }
-
   return response.json()
 }
 
@@ -94,6 +93,17 @@ export async function startResearch(
   const decoder = new TextDecoder()
   let buffer = ''
   let currentEventType = 'message'
+  let currentDataLines: string[] = []
+
+  const flushEvent = () => {
+    if (currentDataLines.length === 0) return
+    const jsonStr = currentDataLines.join('\n')
+    currentDataLines = []
+    if (jsonStr === '[DONE]') return
+    const event = parseSSEEvent(currentEventType, jsonStr)
+    onEvent(event)
+    currentEventType = 'message'
+  }
 
   try {
     while (true) {
@@ -113,31 +123,27 @@ export async function startResearch(
         }
 
         if (trimmed.startsWith('data: ')) {
-          const jsonStr = trimmed.slice(6)
-          if (jsonStr === '[DONE]') {
-            return
-          }
-          const event = parseSSEEvent(currentEventType, jsonStr)
-          onEvent(event)
-          currentEventType = 'message'
+          currentDataLines.push(trimmed.slice(6))
           continue
         }
 
-        // Empty line signals the end of an event; reset.
+        // Empty line signals end of an event — flush accumulated data
         if (trimmed === '') {
-          currentEventType = 'message'
+          flushEvent()
         }
       }
     }
 
-    const remaining = buffer.trim()
-    if (remaining.startsWith('data: ')) {
-      const jsonStr = remaining.slice(6)
-      if (jsonStr && jsonStr !== '[DONE]') {
-        const event = parseSSEEvent(currentEventType, jsonStr)
-        onEvent(event)
-      }
+    // Flush any remaining data in buffer
+    if (buffer.trim()) {
+      buffer.split('\n').forEach((line) => {
+        const trimmed = line.trim()
+        if (trimmed.startsWith('data: ')) {
+          currentDataLines.push(trimmed.slice(6))
+        }
+      })
     }
+    flushEvent()
   } finally {
     reader.releaseLock()
   }
@@ -178,6 +184,7 @@ export async function getHistory(): Promise<ResearchReport[]> {
       ...r,
       subtopics: r.subtopics ?? [],
       tasks: r.tasks ?? [],
+      depth: r.depth ?? 'standard',
       markdown_content: r.markdown_content ?? '',
       status: r.status ?? 'complete',
       created_at: r.created_at ?? '',

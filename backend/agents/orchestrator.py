@@ -75,6 +75,7 @@ class Orchestrator:
         report = ResearchReport(
             id=report_id,
             topic=topic,
+            depth=depth,
             status="in_progress",
             created_at=datetime.now(timezone.utc).isoformat(),
         )
@@ -235,6 +236,7 @@ class Orchestrator:
                         "topic": topic,
                         "subtopics": report.subtopics,
                         "markdown_content": final_markdown,
+                        "depth": depth,
                         "status": "complete",
                         "created_at": report.created_at,
                         "tasks": [t.model_dump() for t in resolved_tasks],
@@ -348,12 +350,13 @@ class Orchestrator:
                 "topic": report.topic,
                 "subtopics": report.subtopics,
                 "markdown_content": report.markdown_content,
+                "depth": report.depth,
                 "status": report.status,
                 "created_at": report.created_at,
                 "tasks": [t.model_dump() for t in report.tasks],
             }
 
-            supabase.table("reports").upsert(report_data).execute()
+            supabase.table("research_reports").upsert(report_data).execute()
             logger.info(f"Report {report.id} saved to Supabase")
 
             # Upload PDF

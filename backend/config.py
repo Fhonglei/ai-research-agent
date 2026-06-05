@@ -16,9 +16,16 @@ def _env_file_paths() -> tuple[str, ...]:
 class Config(BaseSettings):
     """Application configuration loaded from environment variables."""
 
+    # LLM provider: deepseek (OpenAI-compatible) or anthropic
+    LLM_PROVIDER: str = "deepseek"
+
     # DeepSeek API (OpenAI-compatible)
-    DEEPSEEK_API_KEY: str
+    DEEPSEEK_API_KEY: Optional[str] = ""
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+
+    # Anthropic API (optional)
+    ANTHROPIC_API_KEY: Optional[str] = None
+    ANTHROPIC_MODEL: str = "claude-opus-4-8"
 
     # Tavily Search API (optional — DuckDuckGo used as fallback)
     TAVILY_API_KEY: Optional[str] = None
@@ -33,6 +40,12 @@ class Config(BaseSettings):
 
     # Default model
     MODEL: str = "deepseek-chat"
+
+    @property
+    def active_model(self) -> str:
+        if self.LLM_PROVIDER.lower() == "anthropic":
+            return self.ANTHROPIC_MODEL
+        return self.MODEL
 
     # Report storage directory
     REPORTS_DIR: str = "reports"

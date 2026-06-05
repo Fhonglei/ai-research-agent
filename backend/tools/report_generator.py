@@ -218,7 +218,7 @@ def generate_markdown(report: ResearchReport) -> str:
     lines.append(f"# Research Report: {report.topic}")
     lines.append("")
     lines.append(f"**Date:** {report.created_at[:10] if report.created_at else 'N/A'}")
-    lines.append(f"**Depth:** {report.tasks[0].status if report.tasks else 'N/A'} | "
+    lines.append(f"**Depth:** {report.depth or 'standard'} | "
                  f"**Sources consulted:** {sum(len(t.sources) for t in report.tasks)}")
     lines.append("")
 

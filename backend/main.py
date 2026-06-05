@@ -72,13 +72,18 @@ def _api_key_configured(key: str) -> bool:
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint."""
-    deepseek_ok = _api_key_configured(config.DEEPSEEK_API_KEY)
-    status = "healthy" if deepseek_ok else "degraded"
+    provider = config.LLM_PROVIDER.lower()
+    if provider == "anthropic":
+        llm_ok = bool(config.ANTHROPIC_API_KEY and config.ANTHROPIC_API_KEY.strip())
+    else:
+        llm_ok = _api_key_configured(config.DEEPSEEK_API_KEY or "")
+    status = "healthy" if llm_ok else "degraded"
     return {
         "status": status,
-        "version": "1.0.0",
-        "model": config.MODEL,
-        "deepseek_configured": deepseek_ok,
+        "version": "1.1.0",
+        "provider": provider,
+        "model": config.active_model,
+        "llm_configured": llm_ok,
         "tavily_configured": bool(config.TAVILY_API_KEY and _api_key_configured(config.TAVILY_API_KEY)),
         "supabase_configured": bool(config.SUPABASE_URL and config.SUPABASE_ANON_KEY),
     }
@@ -138,7 +143,7 @@ async def get_report(report_id: str):
     client = _get_supabase_client()
     if client:
         try:
-            response = client.table("reports").select("*").eq("id", report_id).execute()
+            response = client.table("research_reports").select("*").eq("id", report_id).execute()
             if response.data:
                 return JSONResponse(content=response.data[0])
         except Exception as e:
@@ -244,7 +249,7 @@ async def get_history(
     if client:
         try:
             response = (
-                client.table("reports")
+                client.table("research_reports")
                 .select("*")
                 .order("created_at", desc=True)
                 .range(offset, offset + limit - 1)
@@ -304,7 +309,7 @@ async def get_report_markdown(report_id: str):
     client = _get_supabase_client()
     if client:
         try:
-            response = client.table("reports").select("markdown_content, id").eq("id", report_id).execute()
+            response = client.table("research_reports").select("markdown_content, id").eq("id", report_id).execute()
             if response.data and response.data[0].get("markdown_content"):
                 return JSONResponse(content={
                     "id": report_id,

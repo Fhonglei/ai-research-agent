@@ -1,7 +1,7 @@
 import json
 from typing import Optional
-from openai import OpenAI
 from config import config
+from llm.client import LLMClient
 from utils.logger import logger
 
 
@@ -22,11 +22,8 @@ class TaskDecomposer:
             api_key: DeepSeek API key. Falls back to config.
             model: Model to use. Falls back to config.MODEL.
         """
-        self.client = OpenAI(
-            api_key=api_key or config.DEEPSEEK_API_KEY,
-            base_url=config.DEEPSEEK_BASE_URL,
-        )
-        self.model = model or config.MODEL
+        self.llm = LLMClient(api_key=api_key, model=model)
+        self.model = self.llm.model
         logger.info(f"TaskDecomposer initialized with model={self.model}")
 
     def decompose(self, topic: str, depth: str = "standard") -> list[str]:
@@ -57,29 +54,31 @@ class TaskDecomposer:
 
         try:
             logger.info(f"Decomposing topic (depth={depth}): '{topic[:100]}...'")
-            response = self.client.chat.completions.create(
-                model=self.model,
+            raw_output = self.llm.complete(
+                system=(
+                    "You are a senior research analyst with expertise across multiple domains. "
+                    "Your task is to break a broad research topic into distinct, non-overlapping "
+                    "subtopics that together provide comprehensive coverage. Each subtopic should "
+                    "represent a meaningful angle of investigation — think about historical context, "
+                    "current state, future trends, key players, technological aspects, economic "
+                    "factors, social impact, regulatory environment, and competing perspectives. "
+                    "Subtopic titles should be clear, concise, and self-contained."
+                ),
+                user=prompt,
                 max_tokens=2048,
                 temperature=0.7,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a senior research analyst with expertise across multiple domains. "
-                            "Your task is to break a broad research topic into distinct, non-overlapping "
-                            "subtopics that together provide comprehensive coverage. Each subtopic should "
-                            "represent a meaningful angle of investigation — think about historical context, "
-                            "current state, future trends, key players, technological aspects, economic "
-                            "factors, social impact, regulatory environment, and competing perspectives. "
-                            "Subtopic titles should be clear, concise, and self-contained (understandable "
-                            "without the parent topic)."
-                        ),
+                json_schema={
+                    "type": "object",
+                    "properties": {
+                        "subtopics": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        }
                     },
-                    {"role": "user", "content": prompt},
-                ],
+                    "required": ["subtopics"],
+                    "additionalProperties": False,
+                },
             )
-
-            raw_output = response.choices[0].message.content
             subtopics = self._parse_subtopics(raw_output)
 
             # Enforce count bounds
@@ -113,10 +112,8 @@ Guidelines:
 - Avoid overlap between subtopics.
 - Write subtopics as clear, descriptive phrases (not questions).
 
-IMPORTANT: Return your response as a JSON array of strings ONLY. No markdown, no explanation,
-no additional text. Example format:
-
-["Subtopic One Description", "Subtopic Two Description", "Subtopic Three Description"]"""
+IMPORTANT: Return your response as JSON only, with this exact shape:
+{"subtopics": ["Subtopic One Description", "Subtopic Two Description", "Subtopic Three Description"]}"""
 
     def _parse_subtopics(self, raw_output: str) -> list[str]:
         """
@@ -134,6 +131,8 @@ no additional text. Example format:
                 lines = [l for l in lines if not l.startswith("```")]
                 raw_output = "\n".join(lines).strip()
             parsed = json.loads(raw_output)
+            if isinstance(parsed, dict) and isinstance(parsed.get("subtopics"), list):
+                return [str(item).strip() for item in parsed["subtopics"] if str(item).strip()]
             if isinstance(parsed, list):
                 return [str(item).strip() for item in parsed if str(item).strip()]
         except json.JSONDecodeError:
