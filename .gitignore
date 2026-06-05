@@ -12,6 +12,7 @@ dist/
 build/
 *.egg
 .env
+.env.local
 venv/
 .venv/
 
