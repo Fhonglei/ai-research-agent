@@ -127,12 +127,15 @@ export default function HomePageClient() {
         setStatus("complete")
         if (event.data) {
           const nextSubtopics = event.data.subtopics || subtopicsRef.current
+          const nextTasks = (event.data.tasks as ResearchTask[] | undefined) || tasksRef.current
+          tasksRef.current = nextTasks
           const nextReport: ResearchReport = {
             id: event.data.report_id || "",
             topic: event.data.topic || topicRef.current,
             subtopics: nextSubtopics,
             markdown_content: event.data.markdown_content || "",
-            tasks: tasksRef.current,
+            tasks: nextTasks,
+            quality: event.data.quality || null,
             depth: event.data.depth || depthRef.current,
             status: "complete",
             created_at: event.data.created_at || new Date().toISOString(),
@@ -140,7 +143,7 @@ export default function HomePageClient() {
             pptx_available: Boolean(event.data.pptx_available),
           }
           setSubtopics(nextSubtopics)
-          setTasks(tasksRef.current)
+          setTasks(nextTasks)
           setReport(nextReport)
         }
         break
@@ -193,8 +196,8 @@ export default function HomePageClient() {
           setReport(data)
           setStatus(data.status)
           setTopic(data.topic)
-          setSubtopics(data.subtopics)
-          setTasks(data.tasks)
+          setSubtopics(data.subtopics ?? [])
+          setTasks(data.tasks ?? [])
         }
       } catch (err) {
         if (!cancelled) {

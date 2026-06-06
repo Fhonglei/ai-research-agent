@@ -15,9 +15,15 @@ services:
         sync: false
       - key: DEEPSEEK_BASE_URL
         value: "https://api.deepseek.com"
+      - key: TAVILY_API_KEY
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
+      - key: CORS_ORIGINS
+        value: "http://localhost:3000"
+      - key: REQUIRE_LLM_FOR_RESEARCH
+        value: "true"
       - key: PYTHON_VERSION
         value: "3.12.0"

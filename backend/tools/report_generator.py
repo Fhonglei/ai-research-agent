@@ -345,7 +345,7 @@ def markdown_to_pdf(markdown_content: str, output_path: str) -> str:
 </html>"""
 
         # Convert to PDF using WeasyPrint
-        from weasyprint import HTML
+        from weasyprint import HTML  # pyright: ignore[reportMissingImports]
         HTML(string=html_document).write_pdf(str(output_path))
 
         logger.info(f"PDF generated at: {output_path}")
@@ -381,11 +381,13 @@ def markdown_to_pptx(markdown_content: str, output_path: str) -> str:
         from pptx import Presentation
         from pptx.util import Inches, Pt
         from pptx.enum.text import PP_ALIGN
+        from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
         from pptx.dml.color import RGBColor
 
         prs = Presentation()
         prs.slide_width = Inches(13.333)
         prs.slide_height = Inches(7.5)
+        slide_width = prs.slide_width or Inches(13.333)
 
         # Parse markdown into sections
         sections = _parse_markdown_sections(markdown_content)
@@ -432,7 +434,11 @@ def markdown_to_pptx(markdown_content: str, output_path: str) -> str:
 
             # Header bar
             header_shape = slide.shapes.add_shape(
-                1, Inches(0), Inches(0), prs.slide_width, Inches(1.2)
+                MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+                Inches(0),
+                Inches(0),
+                slide_width,
+                Inches(1.2),
             )
             header_shape.fill.solid()
             header_shape.fill.fore_color.rgb = RGBColor(0x1A, 0x3A, 0x5C)

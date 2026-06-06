@@ -4,7 +4,7 @@ import uuid
 import os
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Optional
 
 from config import config
 from models.schemas import ResearchReport, ResearchTask, SSEEvent
@@ -13,9 +13,10 @@ from agents.researcher import Researcher
 from agents.synthesizer import Synthesizer
 from tools.report_generator import generate_markdown, markdown_to_pdf, markdown_to_pptx
 from utils.logger import logger
+from utils.quality import evaluate_report_quality
 
 
-REPORTS_DIR = Path(__file__).resolve().parent.parent / "reports"
+REPORTS_DIR = Path(config.REPORTS_DIR)
 
 
 class Orchestrator:
@@ -39,8 +40,8 @@ class Orchestrator:
             api_key: DeepSeek API key. Falls back to config.
             model: Model to use. Falls back to config.MODEL.
         """
-        self.api_key = api_key or config.DEEPSEEK_API_KEY
-        self.model = model or config.MODEL
+        self.api_key = api_key
+        self.model = model or config.active_model
         self.decomposer = TaskDecomposer(api_key=self.api_key, model=self.model)
         self.researcher = Researcher(api_key=self.api_key, model=self.model)
         self.synthesizer = Synthesizer(api_key=self.api_key, model=self.model)
@@ -81,6 +82,17 @@ class Orchestrator:
         )
 
         try:
+            if config.REQUIRE_LLM_FOR_RESEARCH and not config.llm_configured:
+                yield {
+                    "event": "error",
+                    "data": json.dumps({
+                        "message": "LLM API key is not configured. Set DEEPSEEK_API_KEY or ANTHROPIC_API_KEY.",
+                        "report_id": report_id,
+                    }),
+                }
+                report.status = "failed"
+                return
+
             # ── Stage 1: Decomposition ──
             yield {
                 "event": "decomposing",
@@ -118,8 +130,6 @@ class Orchestrator:
             }
 
             # ── Stage 2: Research (parallel) ──
-            tasks: list[ResearchTask] = []
-
             # Yield "researching" events for each subtopic
             for i, subtopic in enumerate(subtopics):
                 yield {
@@ -134,16 +144,22 @@ class Orchestrator:
                 }
 
             # Run all research tasks in parallel
+            semaphore = asyncio.Semaphore(max(1, config.MAX_PARALLEL_RESEARCH_TASKS))
+
             async def run_research_task(subtopic: str) -> ResearchTask:
-                return await asyncio.to_thread(self.researcher.research, subtopic)
+                async with semaphore:
+                    return await asyncio.to_thread(self.researcher.research, subtopic)
 
             research_coros = [run_research_task(st) for st in subtopics]
-            tasks = await asyncio.gather(*research_coros, return_exceptions=True)
+            task_results: list[ResearchTask | BaseException] = await asyncio.gather(
+                *research_coros,
+                return_exceptions=True,
+            )
 
             # Process results
             resolved_tasks: list[ResearchTask] = []
-            for i, (subtopic, result) in enumerate(zip(subtopics, tasks)):
-                if isinstance(result, Exception):
+            for i, (subtopic, result) in enumerate(zip(subtopics, task_results)):
+                if isinstance(result, BaseException):
                     logger.error(f"Research failed for '{subtopic[:80]}': {result}")
                     failed_task = ResearchTask(
                         id=str(uuid.uuid4()),
@@ -224,6 +240,8 @@ class Orchestrator:
             # Use the report generator to produce final markdown
             final_markdown = generate_markdown(report)
             report.markdown_content = final_markdown
+            report.quality = evaluate_report_quality(report)
+            report.status = "complete"
 
             # Persist markdown + metadata locally (history / get_report without Supabase)
             md_path = report_dir / "report.md"
@@ -253,6 +271,7 @@ class Orchestrator:
                         "status": "complete",
                         "created_at": report.created_at,
                         "tasks": [t.model_dump() for t in resolved_tasks],
+                        "quality": report.quality.model_dump() if report.quality else None,
                         "pdf_available": bool(pdf_result),
                         "pptx_available": bool(pptx_result),
                     },
@@ -281,8 +300,6 @@ class Orchestrator:
                     logger.warning(f"Supabase save failed (non-fatal): {e}")
 
             # ── Stage 6: Complete ──
-            report.status = "complete"
-
             yield {
                 "event": "complete",
                 "data": json.dumps({
@@ -296,15 +313,8 @@ class Orchestrator:
                     "pptx_available": bool(pptx_result),
                     "pdf_url": pdf_url,
                     "pptx_url": pptx_url,
-                    "tasks": [
-                        {
-                            "id": t.id,
-                            "subtopic": t.subtopic,
-                            "status": t.status,
-                            "source_count": len(t.sources),
-                        }
-                        for t in resolved_tasks
-                    ],
+                    "tasks": [_client_task_payload(t) for t in resolved_tasks],
+                    "quality": report.quality.model_dump() if report.quality else None,
                     "created_at": report.created_at,
                 }),
             }
@@ -343,9 +353,15 @@ class Orchestrator:
         try:
             from supabase import create_client, Client
 
+            supabase_url = config.SUPABASE_URL
+            supabase_key = config.SUPABASE_ANON_KEY
+            if not supabase_url or not supabase_key:
+                logger.warning("Supabase is not configured; skipping persistence")
+                return ("", "")
+
             supabase: Client = create_client(
-                config.SUPABASE_URL,
-                config.SUPABASE_ANON_KEY,
+                supabase_url,
+                supabase_key,
             )
 
             # Insert report record
@@ -358,6 +374,7 @@ class Orchestrator:
                 "status": report.status,
                 "created_at": report.created_at,
                 "tasks": [t.model_dump() for t in report.tasks],
+                "quality": report.quality.model_dump() if report.quality else {},
             }
 
             supabase.table("research_reports").upsert(report_data).execute()
@@ -396,6 +413,12 @@ class Orchestrator:
                 )
                 logger.info(f"PPTX uploaded for report {report.id}")
 
+            if pdf_url or pptx_url:
+                supabase.table("research_reports").update({
+                    "pdf_url": pdf_url,
+                    "pptx_url": pptx_url,
+                }).eq("id", report.id).execute()
+
             return (pdf_url, pptx_url)
 
         except ImportError:
@@ -404,3 +427,20 @@ class Orchestrator:
         except Exception as e:
             logger.error(f"Supabase save error: {e}")
             return ("", "")
+
+
+def _client_task_payload(task: ResearchTask) -> dict[str, Any]:
+    return {
+        "id": task.id,
+        "subtopic": task.subtopic,
+        "summary": task.summary,
+        "status": task.status,
+        "sources": [
+            {
+                "url": source.url,
+                "title": source.title,
+                "snippet": source.snippet,
+            }
+            for source in task.sources
+        ],
+    }

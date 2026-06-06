@@ -65,19 +65,25 @@ class Researcher:
 
         try:
             # Step 1: Search the web
-            search_results = self.search_tool.search(query=subtopic, max_results=5)
+            search_results = self.search_tool.search(
+                query=subtopic,
+                max_results=config.SEARCH_MAX_RESULTS,
+            )
             if not search_results:
-                # Try a broader search
-                search_results = self.search_tool.search(query=subtopic, max_results=5)
+                broader_query = f"{subtopic} overview analysis sources"
+                search_results = self.search_tool.search(
+                    query=broader_query,
+                    max_results=config.SEARCH_MAX_RESULTS,
+                )
             if not search_results:
                 task.status = "failed"
                 task.summary = f"No search results found for '{subtopic}'."
                 logger.warning(f"No search results for subtopic: {subtopic}")
                 return task
 
-            # Step 2: Fetch content from top 3 results
+            # Step 2: Fetch content from top results
             sources: list[Source] = []
-            top_results = search_results[:3]
+            top_results = search_results[:config.FETCH_TOP_N]
             for result in top_results:
                 url = result.get("url", "")
                 title = result.get("title", "")

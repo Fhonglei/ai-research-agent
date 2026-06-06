@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from openai import OpenAI
 
@@ -23,7 +23,7 @@ class LLMClient:
             if not is_configured_value(anthropic_api_key):
                 return
             try:
-                import anthropic
+                import anthropic  # pyright: ignore[reportMissingImports]
             except ImportError as exc:
                 raise RuntimeError("Install the anthropic package to use LLM_PROVIDER=anthropic") from exc
             self.client = anthropic.Anthropic(api_key=anthropic_api_key)
@@ -90,7 +90,8 @@ class LLMClient:
         if json_schema is not None:
             kwargs["response_format"] = {"type": "json_object"}
 
-        response = self.client.chat.completions.create(**kwargs)
+        client = cast(Any, self.client)
+        response = client.chat.completions.create(**kwargs)
         return (response.choices[0].message.content or "").strip()
 
     def _complete_anthropic(
@@ -115,5 +116,6 @@ class LLMClient:
                 "schema": json_schema,
             }
 
-        response = self.client.messages.create(**kwargs)
+        client = cast(Any, self.client)
+        response = client.messages.create(**kwargs)
         return "".join(block.text for block in response.content if block.type == "text").strip()

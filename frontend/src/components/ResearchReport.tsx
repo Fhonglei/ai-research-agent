@@ -14,6 +14,9 @@ import {
   ExternalLink,
   Copy,
   Check,
+  Gauge,
+  Database,
+  AlertTriangle,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -28,6 +31,10 @@ interface ResearchReportProps {
 
 export function ResearchReport({ report }: ResearchReportProps) {
   const [copied, setCopied] = useState(false)
+  const quality = report.quality
+  const qualityWarnings = quality?.warnings ?? []
+  const citationCoverage = Math.round((quality?.citation_coverage ?? 0) * 100)
+  const successRate = Math.round((quality?.success_rate ?? 0) * 100)
 
   const handleCopyMarkdown = async () => {
     try {
@@ -92,6 +99,54 @@ export function ResearchReport({ report }: ResearchReportProps) {
               Complete
             </Badge>
           </div>
+          {quality && (
+            <div className="mt-5 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-4">
+                <div className="rounded-md border bg-muted/35 p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Gauge className="h-3.5 w-3.5" />
+                    Quality
+                  </div>
+                  <div className="mt-1 text-xl font-semibold">
+                    {Math.round(quality.confidence_score)}
+                  </div>
+                </div>
+                <div className="rounded-md border bg-muted/35 p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Database className="h-3.5 w-3.5" />
+                    Sources
+                  </div>
+                  <div className="mt-1 text-xl font-semibold">
+                    {quality.source_count}
+                  </div>
+                </div>
+                <div className="rounded-md border bg-muted/35 p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Link2 className="h-3.5 w-3.5" />
+                    Citations
+                  </div>
+                  <div className="mt-1 text-xl font-semibold">
+                    {citationCoverage}%
+                  </div>
+                </div>
+                <div className="rounded-md border bg-muted/35 p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Success
+                  </div>
+                  <div className="mt-1 text-xl font-semibold">
+                    {successRate}%
+                  </div>
+                </div>
+              </div>
+              {qualityWarnings.length > 0 && (
+                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <span>{qualityWarnings[0]}</span>
+                </div>
+              )}
+            </div>
+          )}
         </CardHeader>
       </Card>
 

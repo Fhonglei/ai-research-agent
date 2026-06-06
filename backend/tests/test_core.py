@@ -9,6 +9,7 @@ import pytest
 from models.schemas import ResearchReport, ResearchTask, Source
 from agents.task_decomposer import TaskDecomposer
 from tools.web_search import SearchTool
+from tools.content_fetcher import _is_private_or_local_host
 from tools.report_generator import generate_markdown, _parse_markdown_sections, _slugify, markdown_to_pdf
 from config import is_configured_value
 
@@ -66,21 +67,46 @@ class TestConfig:
 
 
 class TestSearchTool:
+    class FakeDDGS:
+        def text(self, query, max_results=5):
+            return [
+                {
+                    "href": f"https://example.com/{i}",
+                    "title": f"Result {i}",
+                    "body": f"Snippet {i} for {query}",
+                }
+                for i in range(max_results)
+            ]
+
     @pytest.fixture
     def search(self):
-        return SearchTool(api_key=None)
+        return SearchTool(api_key="", ddgs_client=TestSearchTool.FakeDDGS())
 
     def test_search_empty_query(self, search):
         assert search.search("") == []
         assert search.search("   ") == []
 
-    def test_search_returns_results(self, search):
+    def test_search_returns_mocked_results(self, search):
         results = search.search("Python programming", max_results=3)
         assert isinstance(results, list)
+        assert len(results) == 3
         for r in results:
             assert "url" in r
             assert "title" in r
             assert "content" in r
+
+    def test_search_clamps_result_count(self, search):
+        results = search.search("Python programming", max_results=50)
+        assert len(results) == 10
+
+
+class TestContentFetcherSafety:
+    def test_rejects_private_and_local_hosts(self):
+        assert _is_private_or_local_host("localhost")
+        assert _is_private_or_local_host("127.0.0.1")
+        assert _is_private_or_local_host("10.0.0.8")
+        assert _is_private_or_local_host("192.168.1.10")
+        assert not _is_private_or_local_host("example.com")
 
 
 class TestReportGenerator:

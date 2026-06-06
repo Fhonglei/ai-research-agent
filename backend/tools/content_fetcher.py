@@ -1,12 +1,9 @@
-import re
+import ipaddress
 import httpx
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
+from config import config
 from utils.logger import logger
-
-
-_PRIVATE_IP_RE = re.compile(
-    r"^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.0\.0\.0|localhost)",
-)
 
 
 class ContentFetcher:
@@ -26,7 +23,7 @@ class ContentFetcher:
     # Tags to strip entirely before extracting text
     STRIP_TAGS = ["script", "style", "nav", "footer", "header", "noscript", "iframe"]
 
-    def __init__(self, timeout: float = 10.0, max_chars: int = 5000):
+    def __init__(self, timeout: float | None = None, max_chars: int | None = None):
         """
         Initialize the content fetcher.
 
@@ -34,8 +31,8 @@ class ContentFetcher:
             timeout: Request timeout in seconds.
             max_chars: Maximum number of characters to return.
         """
-        self.timeout = timeout
-        self.max_chars = max_chars
+        self.timeout = timeout or config.CONTENT_FETCH_TIMEOUT_SECONDS
+        self.max_chars = max_chars or config.CONTENT_FETCH_MAX_CHARS
         self.client = httpx.Client(
             headers={"User-Agent": self.USER_AGENT},
             timeout=self.timeout,
@@ -59,9 +56,12 @@ class ContentFetcher:
 
         url = url.strip()
 
-        # Reject non-http schemes and private-network addresses
-        if not url.startswith(("http://", "https://")):
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname:
             logger.warning(f"Rejected non-http URL: {url}")
+            return ""
+        if _is_private_or_local_host(parsed.hostname):
+            logger.warning(f"Rejected private or local URL: {url}")
             return ""
 
         try:
@@ -136,3 +136,14 @@ class ContentFetcher:
     def close(self):
         """Close the underlying HTTP client."""
         self.client.close()
+
+
+def _is_private_or_local_host(hostname: str) -> bool:
+    host = hostname.strip().lower()
+    if host in {"localhost", "0.0.0.0"} or host.endswith(".local"):
+        return True
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved

@@ -184,6 +184,7 @@ export async function getHistory(): Promise<ResearchReport[]> {
       ...r,
       subtopics: r.subtopics ?? [],
       tasks: r.tasks ?? [],
+      quality: r.quality ?? null,
       depth: r.depth ?? 'standard',
       markdown_content: r.markdown_content ?? '',
       pdf_available: Boolean(r.pdf_available),

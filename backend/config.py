@@ -52,9 +52,26 @@ class Config(BaseSettings):
     # Backend server
     BACKEND_PORT: int = 8000
     BACKEND_HOST: str = "0.0.0.0"
+    CORS_ORIGINS: str = "http://localhost:3000"
 
     # Default model
     MODEL: str = "deepseek-chat"
+
+    # Research pipeline controls
+    MAX_TOPIC_LENGTH: int = 500
+    SEARCH_MAX_RESULTS: int = 5
+    FETCH_TOP_N: int = 3
+    MAX_PARALLEL_RESEARCH_TASKS: int = 4
+    CONTENT_FETCH_TIMEOUT_SECONDS: float = 10.0
+    CONTENT_FETCH_MAX_CHARS: int = 5000
+    REQUIRE_LLM_FOR_RESEARCH: bool = False
+
+    # Report storage directory
+    REPORTS_DIR: str = str(_BACKEND_DIR / "reports")
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
     @property
     def active_model(self) -> str:
@@ -78,9 +95,6 @@ class Config(BaseSettings):
             is_configured_value(self.SUPABASE_URL)
             and is_configured_value(self.SUPABASE_ANON_KEY)
         )
-
-    # Report storage directory
-    REPORTS_DIR: str = "reports"
 
     model_config = {
         "env_file": _env_file_paths(),
