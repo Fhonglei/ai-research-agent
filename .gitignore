@@ -19,6 +19,8 @@ venv/
 # Next.js
 .next/
 out/
+.vercel/
+frontend/.vercel/
 
 # IDE
 .vscode/

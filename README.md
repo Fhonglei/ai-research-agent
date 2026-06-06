@@ -6,8 +6,8 @@ This project is designed as a portfolio-ready AI engineering project: it shows f
 
 ## Demo
 
-- Frontend: add your Vercel URL after deployment
-- Backend health check: add your Railway/Render URL after deployment
+- Frontend: https://ai-research-agent-frontend.vercel.app
+- Backend health check: https://ai-research-agent-api-production.up.railway.app/api/health
 - Local frontend: `http://localhost:3000`
 - Local backend docs: `http://localhost:8000/docs`
 
@@ -58,7 +58,7 @@ flowchart TD
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | Next.js 14, React, TypeScript, Tailwind CSS, shadcn-style UI |
+| Frontend | Next.js 15, React, TypeScript, Tailwind CSS, shadcn-style UI |
 | Backend | FastAPI, Pydantic, SSE |
 | AI | DeepSeek by default, Anthropic optional |
 | Search | Tavily API, DuckDuckGo fallback |
