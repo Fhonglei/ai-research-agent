@@ -1,5 +1,7 @@
 # AI Research Agent
 
+[![CI](https://github.com/Fhonglei/ai-research-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/Fhonglei/ai-research-agent/actions/workflows/ci.yml)
+
 AI Research Agent is a full-stack research automation app. Users enter a topic, choose a research depth, and receive a sourced markdown report with PDF and PowerPoint export options.
 
 This project is designed as a portfolio-ready AI engineering project: it shows frontend product work, FastAPI backend design, LLM orchestration, web search integration, streaming progress, report generation, quality evaluation, testing, and deployment readiness.
@@ -8,8 +10,12 @@ This project is designed as a portfolio-ready AI engineering project: it shows f
 
 - Frontend: https://ai-research-agent-frontend.vercel.app
 - Backend health check: https://ai-research-agent-api-production.up.railway.app/api/health
+- Demo script: `docs/DEMO_SCRIPT.md`
+- Production checklist: `docs/PRODUCTION_CHECKLIST.md`
 - Local frontend: `http://localhost:3000`
 - Local backend docs: `http://localhost:8000/docs`
+
+The deployed backend will report `degraded` until `DEEPSEEK_API_KEY` is configured. Add `TAVILY_API_KEY` for better source quality.
 
 ## What It Does
 
@@ -180,6 +186,7 @@ Frontend:
 cd frontend
 npm install
 npm run lint
+npm run typecheck
 npm run build
 ```
 

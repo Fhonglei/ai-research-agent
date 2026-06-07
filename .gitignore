@@ -11,6 +11,8 @@ __pycache__/
 dist/
 build/
 *.egg
+.pytest_cache/
+pytest-cache-files-*/
 .env
 .env.local
 venv/
@@ -21,6 +23,7 @@ venv/
 out/
 .vercel/
 frontend/.vercel/
+*.tsbuildinfo
 
 # IDE
 .vscode/
