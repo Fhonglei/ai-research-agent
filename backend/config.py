@@ -42,7 +42,7 @@ class Config(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = None
     ANTHROPIC_MODEL: str = "claude-opus-4-8"
 
-    # Tavily Search API (optional — DuckDuckGo used as fallback)
+    # Tavily Search API (optional; DuckDuckGo is used as fallback)
     TAVILY_API_KEY: Optional[str] = None
 
     # Supabase

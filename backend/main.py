@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,7 @@ app.add_middleware(
 
 REPORTS_DIR = Path(config.REPORTS_DIR)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+REPORT_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
 
 orchestrator = Orchestrator()
 
@@ -101,6 +103,7 @@ async def start_research(request: ResearchRequest):
 
 @app.get("/api/report/{report_id}")
 async def get_report(report_id: str):
+    report_id = _validate_report_id(report_id)
     supabase_report = _get_supabase_report(report_id)
     if supabase_report:
         return JSONResponse(content=supabase_report)
@@ -114,6 +117,7 @@ async def get_report(report_id: str):
 
 @app.get("/api/report/{report_id}/quality")
 async def get_report_quality(report_id: str):
+    report_id = _validate_report_id(report_id)
     report = _get_supabase_report(report_id) or _read_local_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found.")
@@ -122,6 +126,7 @@ async def get_report_quality(report_id: str):
 
 @app.get("/api/report/{report_id}/markdown")
 async def get_report_markdown(report_id: str):
+    report_id = _validate_report_id(report_id)
     supabase_report = _get_supabase_report(report_id)
     if supabase_report and supabase_report.get("markdown_content"):
         return JSONResponse(
@@ -131,8 +136,9 @@ async def get_report_markdown(report_id: str):
             }
         )
 
-    md_file = REPORTS_DIR / report_id / "report.md"
-    if md_file.exists():
+    report_dir = _local_report_dir(report_id)
+    md_file = report_dir / "report.md" if report_dir else None
+    if md_file and md_file.exists():
         return JSONResponse(
             content={
                 "id": report_id,
@@ -148,6 +154,7 @@ async def download_report(
     report_id: str,
     format: str = Query(default="pdf", description="File format: pdf or pptx"),
 ):
+    report_id = _validate_report_id(report_id)
     if format not in ("pdf", "pptx"):
         raise HTTPException(status_code=400, detail="Format must be 'pdf' or 'pptx'.")
 
@@ -158,8 +165,9 @@ async def download_report(
         else "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     )
 
-    local_path = REPORTS_DIR / report_id / filename
-    if local_path.exists():
+    report_dir = _local_report_dir(report_id)
+    local_path = report_dir / filename if report_dir else None
+    if local_path and local_path.exists():
         return FileResponse(
             path=str(local_path),
             media_type=content_type,
@@ -267,8 +275,29 @@ def _get_supabase_report(report_id: str) -> dict[str, Any] | None:
         return None
 
 
+def _validate_report_id(report_id: str) -> str:
+    if not REPORT_ID_PATTERN.fullmatch(report_id):
+        raise HTTPException(status_code=400, detail="Invalid report id.")
+    return report_id
+
+
+def _local_report_dir(report_id: str) -> Path | None:
+    if not REPORT_ID_PATTERN.fullmatch(report_id):
+        return None
+
+    report_dir = (REPORTS_DIR / report_id).resolve()
+    reports_root = REPORTS_DIR.resolve()
+    try:
+        report_dir.relative_to(reports_root)
+    except ValueError:
+        return None
+    return report_dir
+
+
 def _read_local_report(report_id: str) -> dict[str, Any] | None:
-    report_dir = REPORTS_DIR / report_id
+    report_dir = _local_report_dir(report_id)
+    if report_dir is None:
+        return None
     if not report_dir.exists() or not report_dir.is_dir():
         return None
 

@@ -15,7 +15,7 @@ from config import is_configured_value
 
 
 class TestDecomposer:
-    """Task decomposition parsing tests — no API key required for parsing."""
+    """Task decomposition parsing tests; no API key required for parsing."""
 
     @pytest.fixture
     def decomposer(self):
