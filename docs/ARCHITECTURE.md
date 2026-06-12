@@ -74,13 +74,13 @@ The AI Research Agent is a **multi-agent pipeline** that automates research end-
 **Process**: Claude analyzes the topic and generates 3-7 targeted subtopics
 
 ```
-Input: "AI internship market 2026"
+Input: "AI productivity tools market 2026"
 Output:
   1. Industry trends & market size
-  2. Top companies hiring AI interns
+  2. Top companies building AI productivity tools
   3. Required skills & technologies
-  4. Compensation & benefits data
-  5. Application process & interview tips
+  4. Pricing and adoption models
+  5. Enterprise use cases
 ```
 
 **Depth levels** control granularity:
@@ -98,14 +98,14 @@ Output:
 3. **Summarization** (Claude): Generate a 2-3 paragraph summary with key insights, citing specific sources
 
 ```
-Subtopic: "Top companies hiring AI interns"
-  ├── Search: "AI internship companies 2026 hiring"
+Subtopic: "Top companies building AI productivity tools"
+  ├── Search: "AI productivity tools companies 2026"
   ├── Fetch: 3 article contents extracted
-  ├── Summarize: "The top companies hiring AI interns in 2026
-  │    include Google DeepMind, OpenAI, Anthropic, Microsoft
-  │    Research, and Meta AI. These companies are particularly
-  │    focused on candidates with LLM and agent-building
-  │    experience. [Source: techcrunch.com, ...]"
+  ├── Summarize: "AI productivity tools in 2026 are led by
+  │    companies building coding assistants, workflow automation,
+  │    knowledge management, and enterprise copilots. Adoption is
+  │    strongest where tools integrate into existing collaboration
+  │    and software development workflows. [Source: techcrunch.com, ...]"
   └── Sources: [url, title, date for each]
 ```
 

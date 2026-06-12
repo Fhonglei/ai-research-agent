@@ -65,7 +65,7 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
               Topic
             </label>
             <Textarea
-              placeholder="e.g. Research the AI internship market in 2026, including demand, skills, and hiring channels."
+              placeholder="e.g. Research the AI productivity tools market in 2026, including demand, use cases, and key companies."
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               disabled={isLoading}

@@ -32,7 +32,7 @@ Request:
 
 ```json
 {
-  "topic": "AI internship market in 2026",
+  "topic": "AI productivity tools market in 2026",
   "depth": "standard"
 }
 ```

@@ -5,13 +5,13 @@ from utils.quality import evaluate_report_quality
 def test_evaluate_report_quality_scores_sources_and_citations():
     report = ResearchReport(
         id="r1",
-        topic="AI internship market",
+        topic="AI productivity tools market",
         markdown_content="Finding from source [1]. Another claim [2].",
         tasks=[
             ResearchTask(
                 id="t1",
-                subtopic="Hiring demand",
-                summary="AI internship demand is growing [1].",
+                subtopic="Market demand",
+                summary="AI productivity tool demand is growing [1].",
                 status="complete",
                 sources=[
                     Source(url="https://example.com/a", title="A"),
