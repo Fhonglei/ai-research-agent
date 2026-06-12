@@ -56,13 +56,14 @@ class TestDecomposer:
 class TestConfig:
     def test_placeholder_values_are_not_configured(self):
         assert not is_configured_value("")
-        assert not is_configured_value("sk-your-deepseek-key-here")
-        assert not is_configured_value("tvly-your-key-here")
+        assert not is_configured_value("your_deepseek_api_key")
+        assert not is_configured_value("your_tavily_api_key")
+        assert not is_configured_value("provider-your-key")
         assert not is_configured_value("https://your-project.supabase.co")
 
     def test_realistic_values_are_configured(self):
-        assert is_configured_value("sk-real-key")
-        assert is_configured_value("tvly-real-key")
+        assert is_configured_value("deepseek_live_value_123")
+        assert is_configured_value("tavily_live_value_123")
         assert is_configured_value("https://abc123.supabase.co")
 
 

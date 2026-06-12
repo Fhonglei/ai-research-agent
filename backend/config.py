@@ -6,8 +6,8 @@ _BACKEND_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _BACKEND_DIR.parent
 _PLACEHOLDER_MARKERS = (
     "your-",
-    "sk-your",
-    "tvly-your",
+    "your_",
+    "placeholder",
     "your-project",
     "...",
 )

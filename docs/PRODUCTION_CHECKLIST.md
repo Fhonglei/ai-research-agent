@@ -18,16 +18,16 @@ This checklist tracks what is already implemented and what still requires real c
 - Backend pytest coverage for parsing, mocked search, report generation, and quality scoring.
 - Frontend lint/typecheck/build checks.
 - GitHub Actions CI for backend and frontend checks.
-- README with online Demo links and resume bullets.
-- Interview guide in `docs/INTERNSHIP_GUIDE.md`.
-
-## Required Before Resume Demo
-
+- README with online demo links, architecture overview, and setup instructions.
+- Technical notes in `docs/TECHNICAL_NOTES.md`.
 - Set `DEEPSEEK_API_KEY` on Railway.
 - Set `TAVILY_API_KEY` on Railway.
 - Confirm health check returns:
   - `"llm_configured": true`
   - `"tavily_configured": true`
+
+## Required Before Public Demo
+
 - Run one quick research task end to end.
 - Record a GIF or short video using `docs/DEMO_SCRIPT.md`.
 - Add the screenshot/GIF to README.
@@ -43,7 +43,7 @@ This checklist tracks what is already implemented and what still requires real c
 - Add Sentry or another error monitoring tool.
 - Add a custom domain.
 
-## Resume-Ready Claim
+## Project Summary
 
 Accurate:
 

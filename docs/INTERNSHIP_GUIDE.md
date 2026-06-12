@@ -1,10 +1,16 @@
 # 实习/兼职展示指南
 
-这个项目适合投递 AI 应用开发、全栈开发、后端开发、AIGC 工具开发、数据/研究自动化相关实习。
+这个项目适合投递 AI 应用开发、全栈开发、后端开发、AIGC 工具开发、数据/研究自动化相关实习或兼职。
 
 ## 一句话介绍
 
 我做了一个 AI Research Agent。用户输入研究主题后，系统会自动拆解子问题、联网搜索资料、抓取网页内容、生成带引用的研究报告，并支持 Markdown、PDF、PPTX 导出。
+
+## 在线展示
+
+- 前端 Demo: https://ai-research-agent-frontend.vercel.app
+- 后端健康检查: https://ai-research-agent-api-production.up.railway.app/api/health
+- 如果本地网络打不开 `vercel.app` 域名，可以换网络、开代理，或后续绑定自定义域名。
 
 ## 简历写法
 
@@ -14,7 +20,7 @@
 - 使用 Server-Sent Events 实现长任务实时进度流，前端可展示 decomposition、search、synthesis、export 等阶段状态。
 - 设计研究质量评估模块，统计来源数量、引用覆盖率、来源域名多样性、任务成功率和 confidence score，提升 AI 输出可评估性。
 - 增强后端稳定性和安全性：请求校验、CORS 配置、并发限制、私有地址抓取拦截、DuckDuckGo fallback、pytest mock 测试。
-- 使用 Docker Compose、Railway/Render 配置和 Vercel 环境变量完成部署准备。
+- 使用 Docker Compose、Railway 和 Vercel 完成前后端部署，并通过环境变量隔离 API key。
 
 ## 面试可讲技术点
 
@@ -34,15 +40,15 @@
 
 ### 2. 为什么用 SSE？
 
-研究任务可能运行几分钟。如果用普通 HTTP 请求，用户只能等待，体验很差。SSE 可以让后端持续推送状态，前端实时展示每个阶段。
+研究任务可能运行几十秒到几分钟。如果用普通 HTTP 请求，用户只能等待，体验很差。SSE 可以让后端持续推送状态，前端实时展示每个阶段。
 
 ### 3. 怎么控制成本？
 
-- `quick/standard/deep` 控制子任务数量。
+- `quick/standard/deep` 控制研究深度。
 - `SEARCH_MAX_RESULTS` 控制每个子任务搜索结果数量。
 - `FETCH_TOP_N` 控制深入抓取网页数量。
 - `MAX_PARALLEL_RESEARCH_TASKS` 控制并发。
-- `CONTENT_FETCH_MAX_CHARS` 限制发给模型的内容长度。
+- `CONTENT_FETCH_MAX_CHARS` 限制送入模型的内容长度。
 
 ### 4. 怎么处理失败？
 
@@ -65,8 +71,8 @@
 
 优先级从高到低：
 
-1. 部署在线 Demo：Vercel + Railway/Render。
-2. 配置真实 DeepSeek/Tavily key，让完整流程可演示。
+1. 录制 60-90 秒演示 GIF 或视频，放到 README。
+2. 绑定自定义域名，避免部分网络打不开 `vercel.app`。
 3. 增加用户登录和报告隔离。
 4. 把长任务改成后台队列，例如 Celery/RQ/Redis。
 5. 增加引用校验，检查报告中的引用是否真的来自 sources。

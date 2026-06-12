@@ -1,6 +1,6 @@
 # Demo Script
 
-Use this script to record a 60-90 second portfolio demo.
+Use this script to record a 60-90 second product demo.
 
 ## Demo URLs
 
@@ -18,9 +18,9 @@ Use this script to record a 60-90 second portfolio demo.
 
 Use one of these topics:
 
-- `AI internship market in 2026: skills, hiring channels, and portfolio expectations`
 - `Competitive analysis of AI research assistant products`
 - `How small teams can evaluate RAG system quality`
+- `Market analysis of AI document automation tools`
 
 Use `quick` depth for a short demo.
 
@@ -37,7 +37,7 @@ Use `quick` depth for a short demo.
 9. Download Markdown; optionally show PDF/PPTX if generated.
 10. Open the backend health URL in another tab.
 
-## What To Say In An Interview
+## Architecture Summary
 
 This is not a simple prompt-to-answer app. It is a multi-step research pipeline: task decomposition, web search, content extraction, per-track summarization, final synthesis, export generation, and quality evaluation. The frontend uses SSE to show long-running task progress in real time.
 

@@ -4,7 +4,7 @@
 
 AI Research Agent is a full-stack research automation app. Users enter a topic, choose a research depth, and receive a sourced markdown report with PDF and PowerPoint export options.
 
-This project is designed as a portfolio-ready AI engineering project: it shows frontend product work, FastAPI backend design, LLM orchestration, web search integration, streaming progress, report generation, quality evaluation, testing, and deployment readiness.
+This project demonstrates a production-oriented AI research workflow: frontend product design, FastAPI backend services, LLM orchestration, web search integration, streaming progress, report generation, quality evaluation, testing, and deployment readiness.
 
 ## Demo
 
@@ -15,7 +15,7 @@ This project is designed as a portfolio-ready AI engineering project: it shows f
 - Local frontend: `http://localhost:3000`
 - Local backend docs: `http://localhost:8000/docs`
 
-The deployed backend will report `degraded` until `DEEPSEEK_API_KEY` is configured. Add `TAVILY_API_KEY` for better source quality.
+Current deployment status: the Railway backend health check reports `healthy`, with DeepSeek and Tavily configured. If `*.vercel.app` is slow or unreachable on a local network, bind a custom domain or test through another network because some DNS providers resolve Vercel domains incorrectly.
 
 ## What It Does
 
@@ -88,8 +88,8 @@ Edit `.env` and set at least one LLM key:
 
 ```env
 LLM_PROVIDER=deepseek
-DEEPSEEK_API_KEY=sk-your-key
-TAVILY_API_KEY=tvly-your-key
+DEEPSEEK_API_KEY=your_deepseek_api_key
+TAVILY_API_KEY=your_tavily_api_key
 CORS_ORIGINS=http://localhost:3000
 ```
 
@@ -192,7 +192,7 @@ npm run build
 
 ## Deployment
 
-Recommended portfolio deployment:
+Recommended deployment:
 
 - Frontend: Vercel
 - Backend: Railway or Render
@@ -223,23 +223,14 @@ NEXT_PUBLIC_API_URL=https://your-backend-domain
 
 Then redeploy the frontend.
 
-## Why This Helps Internship Applications
+## Engineering Highlights
 
-This project is useful for AI/full-stack internships because it demonstrates:
-
-- Product thinking: a complete user workflow from prompt to exportable report.
-- Backend engineering: API design, validation, streaming, error handling, configuration.
-- AI engineering: prompt design, agent orchestration, search grounding, quality evaluation.
-- Frontend engineering: responsive UI, progress states, report rendering, downloads.
-- DevOps basics: Docker Compose, cloud deployment config, environment isolation.
-- Testing mindset: deterministic tests with mocked network dependencies.
-
-## Resume Bullets
-
-- Built a full-stack AI research agent using Next.js and FastAPI that decomposes topics, searches web sources, synthesizes findings, and exports reports to Markdown, PDF, and PowerPoint.
-- Implemented an SSE-based progress pipeline for real-time research status across decomposition, search, summarization, synthesis, and export stages.
-- Added report quality evaluation with source coverage, citation coverage, unique-domain diversity, task success rate, and confidence scoring.
-- Hardened the backend with request validation, configurable CORS, SSRF-aware content fetching, concurrency limits, and deterministic pytest coverage.
+- End-to-end research workflow from topic input to source-backed report export.
+- Multi-step orchestration across task decomposition, search, content extraction, synthesis, export, and quality evaluation.
+- SSE progress streaming for long-running research jobs.
+- Configurable search depth, fetch depth, concurrency, and LLM provider settings.
+- Backend hardening with request validation, configurable CORS, SSRF-aware content fetching, and deterministic pytest coverage.
+- Deployment-ready configuration for local Docker Compose, Vercel frontend hosting, and Railway/Render backend hosting.
 
 ## Roadmap
 
