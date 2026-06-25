@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
+from openai import OpenAI
 from config import config
-from llm.client import LLMClient
 from models.schemas import ResearchTask, Source
 from tools.web_search import SearchTool
 from tools.content_fetcher import ContentFetcher
@@ -30,8 +30,11 @@ class Researcher:
             search_tool: Pre-configured SearchTool instance (created if not provided).
             content_fetcher: Pre-configured ContentFetcher instance (created if not provided).
         """
-        self.llm = LLMClient(api_key=api_key, model=model)
-        self.model = self.llm.model
+        self.client = OpenAI(
+            api_key=api_key or config.DEEPSEEK_API_KEY,
+            base_url=config.DEEPSEEK_BASE_URL,
+        )
+        self.model = model or config.MODEL
         self.search_tool = search_tool or SearchTool()
         self.content_fetcher = content_fetcher or ContentFetcher()
         logger.info(f"Researcher initialized with model={self.model}")
@@ -164,18 +167,24 @@ SOURCE MATERIAL:
 {context[:8000]}"""
 
         try:
-            summary = self.llm.complete(
-                system=(
-                    "You are an expert research analyst. You synthesize information "
-                    "from multiple web sources into clear, factual research summaries. "
-                    "Your writing is professional, objective, and concise. Always cite "
-                    "sources when presenting specific claims."
-                ),
-                user=prompt,
+            response = self.client.chat.completions.create(
+                model=self.model,
                 max_tokens=2048,
                 temperature=0.5,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an expert research analyst. You synthesize information "
+                            "from multiple web sources into clear, factual research summaries. "
+                            "Your writing is professional, objective, and concise. Always cite "
+                            "sources when presenting specific claims."
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
             )
-            return summary.strip()
+            return response.choices[0].message.content.strip()
 
         except Exception as e:
             logger.error(f"LLM summarization failed: {e}")
